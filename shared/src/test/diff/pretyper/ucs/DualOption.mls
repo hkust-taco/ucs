@@ -279,3 +279,35 @@ fun add_8(x, y) =
 //│           true -> 36
 //│           _ -> yv
 //│ fun add_8: forall 'a. (None | Some[Int], None | Some[Int & 'a]) -> (Int | 'a)
+
+:ducs:postprocess.result
+fun add_1(x, y) =
+  if
+    x is Some(xv) and y is Some(yv) then xv + yv
+    x is Some(xv) and y is None     then xv
+    // x is None     and y is Some(yv) then yv
+    x is None     and y is None     then 0
+//│ Post-processed UCS term:
+//│ case x*‡ of
+//│   Some*◊ ->
+//│     let ucs$args_x$Some*† = (Some).unapply(x,)
+//│     let xv*‡ = (ucs$args_x$Some).0
+//│     case y*‡ of
+//│       Some*◊ ->
+//│         let ucs$args_y$Some*† = (Some).unapply(y,)
+//│         let yv*‡ = (ucs$args_y$Some).0
+//│         +(xv, yv,)
+//│       None*† -> xv
+//│   None*† ->
+//│     case y*‡ of
+//│       None*† -> 0
+//│ ╔══[ERROR] when `x` is `None`
+//│ ║  l.289: 	    x is None     and y is None     then 0
+//│ ║         	         ^^^^
+//│ ╟── `y` has 1 missing case
+//│ ║  l.289: 	    x is None     and y is None     then 0
+//│ ║         	                      ^
+//│ ╟── it can be class `Some`
+//│ ║  l.286: 	    x is Some(xv) and y is Some(yv) then xv + yv
+//│ ╙──       	                           ^^^^
+//│ fun add_1: (None | Some[Int], None) -> Int

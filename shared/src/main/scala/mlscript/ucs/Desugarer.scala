@@ -257,7 +257,7 @@ trait Desugarer extends Transformation
     * Traverse a desugared _core abstract syntax_ tree. The function takes care
     * of let bindings and resolves variables.
     */
-  private def traverseSplit(split: syntax.core.Split)(implicit scope: Scope): Unit =
+  protected def traverseSplit(split: syntax.core.Split)(implicit scope: Scope): Unit =
     split match {
       case Split.Cons(Branch(scrutinee, pattern, continuation), tail) => 
         traverseTerm(scrutinee)

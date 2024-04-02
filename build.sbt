@@ -91,3 +91,18 @@ lazy val compiler = crossProject(JSPlatform, JVMPlatform).in(file("compiler"))
 lazy val compilerJVM = compiler.jvm
 lazy val compilerJS = compiler.js
 
+lazy val web = crossProject(JSPlatform, JVMPlatform).in(file("web"))
+  .settings(
+    name := "mlscript-web",
+    scalaVersion := "2.13.12",
+    scalacOptions ++= Seq("-deprecation")
+  )
+  .jvmSettings()
+  .jsSettings(
+    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.1.0",
+    Compile / fastOptJS / artifactPath := baseDirectory.value / ".." / ".." / "web" / "npm" / "index.js",
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) }
+  )
+  .dependsOn(mlscript % "compile->compile;test->test")
+
+lazy val webJS = web.js

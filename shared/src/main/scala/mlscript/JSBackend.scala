@@ -1162,9 +1162,11 @@ class JSWebBackend extends JSBackend(allowUnresolvedSymbols = true) {
   // Name of the array that contains execution results
   val resultsName: Str = topLevelScope declareRuntimeSymbol "results"
 
-  val prettyPrinterName: Str = topLevelScope declareRuntimeSymbol "prettyPrint"
-
-  polyfill.use("prettyPrint", prettyPrinterName)
+  protected lazy val prettyPrinterName: Str = {
+    val name = topLevelScope declareRuntimeSymbol "prettyPrint"
+    polyfill.use("prettyPrint", prettyPrinterName)
+    name
+  }
 
   private def generate(pgrm: Pgrm): (Ls[Str], Ls[Str]) = {
     val (diags, (typeDefs, otherStmts)) = pgrm.desugared
@@ -1201,19 +1203,27 @@ class JSWebBackend extends JSBackend(allowUnresolvedSymbols = true) {
             }
             val translatedBody = if (sym.isByvalueRec.isEmpty && !sym.isLam) JSArrowFn(Nil, L(originalExpr)) else originalExpr
             topLevelScope.tempVars `with` JSConstDecl(sym.runtimeName, translatedBody) ::
-              JSInvoke(resultsIdent("push"), JSIdent(sym.runtimeName) :: Nil).stmt :: Nil
+              JSInvoke(
+                resultsIdent("push"),
+                makeResultArrayItem(sym.lexicalName, JSIdent(sym.runtimeName)) :: Nil
+              ).stmt :: Nil
           // Ignore type declarations.
           case Def(_, _, R(_), isByname) => Nil
           // `exprs.push(<expr>)`.
           case term: Term =>
             topLevelScope.tempVars `with` JSInvoke(
               resultsIdent("push"),
-              translateTerm(term)(topLevelScope) :: Nil
+              makeResultArrayItem("<immediate>", translateTerm(term)(topLevelScope)) :: Nil
             ).stmt :: Nil
         })
-    val epilogue = resultsIdent.member("map")(JSIdent(prettyPrinterName)).`return` :: Nil
+    val epilogue = makeResultArrayReturn(resultsIdent)
     (JSImmEvalFn(N, Nil, R(polyfill.emit() ::: stmts ::: epilogue), Nil).toSourceCode.toLines, Nil)
   }
+
+  protected def makeResultArrayItem(name: Str, expr: JSExpr): JSExpr = expr
+
+  protected def makeResultArrayReturn(ident: JSIdent): List[JSReturnStmt] =
+    ident.member("map")(JSIdent(prettyPrinterName)).`return` :: Nil
 
   private def generateNewDef(pgrm: Pgrm): (Ls[Str], Ls[Str]) = {
     
@@ -1266,7 +1276,10 @@ class JSWebBackend extends JSBackend(allowUnresolvedSymbols = true) {
             val translatedBody = if (sym.isByvalueRec.isEmpty && !sym.isLam) JSArrowFn(Nil, L(originalExpr)) else originalExpr
             resultNames += sym.runtimeName
             topLevelScope.tempVars `with` JSConstDecl(sym.runtimeName, translatedBody) ::
-              JSInvoke(resultsIdent("push"), JSIdent(sym.runtimeName) :: Nil).stmt :: Nil
+              JSInvoke(
+                resultsIdent("push"),
+                makeResultArrayItem(sym.lexicalName, JSIdent(sym.runtimeName)) :: Nil
+              ).stmt :: Nil
           case fd @ NuFunDef(isLetRec, Var(name), _, tys, R(ty)) =>
             Nil
           case _: Def | _: TypeDef | _: Constructor =>
@@ -1276,15 +1289,23 @@ class JSWebBackend extends JSBackend(allowUnresolvedSymbols = true) {
             resultNames += name.toSourceCode.toString
             topLevelScope.tempVars `with` JSInvoke(
               resultsIdent("push"),
-              name :: Nil
+              makeResultArrayItem("<immediate>", name) :: Nil
             ).stmt :: Nil
         })
-    val epilogue = resultsIdent.member("map")(JSIdent(prettyPrinterName)).`return` :: Nil
+    val epilogue = makeResultArrayReturn(resultsIdent)
     (JSImmEvalFn(N, Nil, R(polyfill.emit() ::: stmts ::: epilogue), Nil).toSourceCode.toLines, resultNames.toList)
   }
 
   def apply(pgrm: Pgrm): (Ls[Str], Ls[Str]) =
     if (!oldDefs) generateNewDef(pgrm) else generate(pgrm)
+}
+
+class NewJSWebBackend extends JSWebBackend {
+  override protected def makeResultArrayItem(name: Str, expr: JSExpr): JSExpr =
+    JSArray(JSLit(JSLit.makeStringLiteral(name)) :: expr :: Nil)
+
+  override protected def makeResultArrayReturn(ident: JSIdent): List[JSReturnStmt] =
+    ident.`return` :: Nil
 }
 
 abstract class JSTestBackend extends JSBackend(allowUnresolvedSymbols = false) {
