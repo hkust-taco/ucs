@@ -8,32 +8,29 @@ import mlscript.pretyper.Scope
 import mlscript.utils._, shorthands._
 import scala.collection.mutable.ArrayBuffer
 
-@JSExportTopLevel("WebDemo")
 object WebDemo {
-  /** Only for checking if it's working. */
-  @JSExport def test(x: Int): Int = x + 1
-
-  @JSExport def compile(source: String): Compilation = {
+  @JSExportTopLevel("compile")
+  def compile(source: String): Compilation = {
     var totalTypeErrors = 0
     var totalWarnings = 0
     var outputMarker = ""
     val blockLineNum = 0
     val showRelativeLineNums = false
     
-    def report(diag: Diagnostic): InternalReport = {
+    def reportDiagnostic(diag: Diagnostic): js.Dynamic = {
       val sctx = Message.mkCtx(diag.allMsgs.iterator.map(_._1), newDefs=true, "?")
       val kind = diag match {
-        case ErrorReport(msg, loco, src) => InternalReport.Kind.Error
-        case WarningReport(msg, loco, src) => InternalReport.Kind.Error
+        case ErrorReport(msg, loco, src) => "error"
+        case WarningReport(msg, loco, src) => "warning"
       }
-      val buffer = new ArrayBuffer[InternalReport.Message]()
+      val buffer = new ArrayBuffer[js.Dynamic]()
       val lastMsgNum = diag.allMsgs.size - 1
       /** solely used for reporting useful test failure messages */
       var globalLineNum = blockLineNum
       diag.allMsgs.zipWithIndex.foreach { case ((msg, loco), msgNum) =>
         val isLast = msgNum =:= lastMsgNum
         val msgStr = msg.showIn(sctx)
-        buffer += InternalReport.Message.Text(msgStr)
+        buffer += js.Dynamic.literal("kind" -> "text", "content" -> msgStr)
         loco.foreach { loc =>
           val (startLineNum, startLineStr, startLineCol) =
             loc.origin.fph.getLineColAt(loc.spanStart)
@@ -50,20 +47,30 @@ object WebDemo {
             val curLine = loc.origin.fph.lines(l - 1)
             val lastCol =
               if (l =:= endLineNum) endLineCol else curLine.length + 1
-            buffer += InternalReport.Message.Code(lineNum, curLine, js.Tuple2(c - 1, lastCol - 1))
+            buffer += js.Dynamic.literal(
+              "kind" -> "code",
+              "line" -> lineNum,
+              "content" -> curLine,
+              "range" -> js.Tuple2(c - 1, lastCol - 1)
+            )
             c = 1
             l += 1
           }
         }
       }
-      InternalReport(kind, buffer.toArray)
+      js.Dynamic.literal(
+        "kind" -> kind,
+        "messages" -> buffer.toJSArray
+      )
     }
 
-    def error(e: Throwable): ExternalReport = {
-      ExternalReport(e.getMessage, e.getStackTrace.map(_.toString))
-    }
+    def reportError(e: Throwable): js.Dynamic = js.Dynamic.literal(
+      "kind" -> "fatal",
+      "message" -> e.getMessage,
+      "stack" -> e.getStackTrace.map(_.toString).toJSArray
+    )
 
-    val buffer = new ArrayBuffer[Report]()
+    val buffer = new ArrayBuffer[js.Dynamic]()
     val parsingResult = try {
       import fastparse._
       import fastparse.Parsed.{Success, Failure}
@@ -72,16 +79,16 @@ object WebDemo {
       val processedBlock = lines.mkString
       val fph = new mlscript.FastParseHelpers(source, lines)
       val origin = Origin("<input>", 1, fph)
-      val lexer = new NewLexer(origin, buffer += _ |> report, dbg = false)
+      val lexer = new NewLexer(origin, buffer += _ |> reportDiagnostic, dbg = false)
       val tokens = lexer.bracketedTokens
-      val parser = new NewParser(origin, tokens, newDefs = true, buffer += _ |> report, dbg = false, N) {
+      val parser = new NewParser(origin, tokens, newDefs = true, buffer += _ |> reportDiagnostic, dbg = false, N) {
         def doPrintDbg(msg: => Str): Unit = if (dbg) println(msg)
       }
       val tu = parser.parseAll(parser.typingUnit)
       (tu, Pgrm(tu.entities)): js.UndefOr[(TypingUnit, Pgrm)]
     } catch {
-      case err: Diagnostic => buffer += report(err); js.undefined
-      case err: Throwable => buffer += error(err); js.undefined
+      case err: Diagnostic => buffer += reportDiagnostic(err); js.undefined
+      case err: Throwable => buffer += reportError(err); js.undefined
     }
     val parsed = StageResult(
       parsingResult.map(_._1.toString()),
@@ -100,9 +107,9 @@ object WebDemo {
         StageResult.success(preTyper.translationResults.toJSArray)
       } catch {
         case err: Diagnostic =>
-          StageResult.failure(js.Array(report(err)))
+          StageResult.failure(js.Array(reportDiagnostic(err)))
         case err: Throwable =>
-          StageResult.failure(js.Array(error(err)))
+          StageResult.failure(js.Array(reportError(err)))
       }
     }
     
@@ -114,7 +121,7 @@ object WebDemo {
           dbg = false, verbose = false, explainErrors = false, newDefs = true)        
         import typer._
 
-        implicit val raise: Raise = buffer += _ |> report
+        implicit val raise: Raise = buffer += _ |> reportDiagnostic
         implicit var ctx: Ctx = Ctx.init
         implicit val extrCtx: Opt[typer.ExtrCtx] = N
 
@@ -125,10 +132,10 @@ object WebDemo {
         }
         val sim = SimplifyPipeline(tpd, S(true))(ctx)
         val exp = typer.expandType(sim)(ctx)
-        exp.showIn(ShowCtx.mk(exp :: Nil, newDefs = true), 0): js.UndefOr[String]
+        exp.showIn(0)(ShowCtx.mk(exp :: Nil, newDefs = true)): js.UndefOr[String]
       } catch {
-        case err: Diagnostic => buffer += report(err); js.undefined
-        case err: Throwable => buffer += error(err); js.undefined
+        case err: Diagnostic => buffer += reportDiagnostic(err); js.undefined
+        case err: Throwable => buffer += reportError(err); js.undefined
       }
     }
     val types = StageResult(typingResult, buffer.toJSArray)
@@ -139,7 +146,7 @@ object WebDemo {
         val (lines, resNames) = backend(pgrm)
         StageResult.success(lines.mkString("\n"))
       } catch {
-        case err: Throwable => StageResult.failure(js.Array(error(err)))
+        case err: Throwable => StageResult.failure(js.Array(reportError(err)))
       }
     }
 

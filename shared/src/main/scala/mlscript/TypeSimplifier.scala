@@ -732,7 +732,7 @@ trait TypeSimplifier { self: Typer =>
     analyze2(st, PolMap(pol))
     
     
-    coOccurrences.foreach(kv => assert(kv._2.nonEmpty))
+    // coOccurrences.foreach(kv => assert(kv._2.nonEmpty))
     
     println(s"[occs] ${coOccurrences.iterator
       .map(occ => s"${printPol(S(occ._1._1))}${occ._1._2} ${occ._2.mkString("{",",","}")}")

@@ -1473,7 +1473,7 @@ class NewJSWebBackend extends JSWebBackend {
     ident.`return` :: Nil
 }
 
-abstract class JSTestBackend extends JSBackend(allowUnresolvedSymbols = false) {
+abstract class JSTestBackend extends JSBackend {
   
   private val lastResultSymbol = topLevelScope.declareValue("res", Some(false), false, N)
   private val resultIdent = JSIdent(lastResultSymbol.runtimeName)

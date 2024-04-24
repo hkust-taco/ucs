@@ -12,7 +12,7 @@ object Serialization {
       case N => term match {
         case let: Let => showLet(let)
         case caseOf: CaseOf => showCaseOf(caseOf)
-        case other => js.Dynamic.literal("type" -> "Term", "term" -> other.showDbg)
+        case other => other.toJSObject
       }
       case S(desugared) => desugared.toJSObject
     }
@@ -43,7 +43,7 @@ object Serialization {
         "type" -> "Let",
         "isRec" -> let.isRec, 
         "name" -> let.name.name, 
-        "rhs" -> let.rhs.showDbg, 
+        "rhs" -> showTerm(let.rhs), 
         "body" -> showTerm(let.body))
     showTerm(term)
   }
@@ -58,7 +58,7 @@ object Serialization {
         case s.Split.Cons(head, tail) =>
           js.Dynamic.literal("type" -> "Cons", "head" -> head.toJSObject, "tail" -> tail.toJSObject)
         case s.Split.Let(rec, nme, rhs, tail) =>
-          js.Dynamic.literal("type" -> "Let", "rec" -> rec, "nme" -> nme.name, "rhs" -> rhs.toJSObject, "tail" -> tail.toJSObject)
+          js.Dynamic.literal("type" -> "Let", "rec" -> rec, "name" -> nme.name, "rhs" -> rhs.toJSObject, "tail" -> tail.toJSObject)
         case s.Split.Else(term) => js.Dynamic.literal("type" -> "Else", "term" -> term.toJSObject)
         case s.Split.Nil => js.Dynamic.literal("type" -> "Nil")
       }
@@ -111,7 +111,7 @@ object Serialization {
         case c.Split.Cons(head, tail) =>
           js.Dynamic.literal("type" -> "Cons", "head" -> head.toJSObject, "tail" -> tail.toJSObject)
         case c.Split.Let(rec, nme, rhs, tail) =>
-          js.Dynamic.literal("type" -> "Let", "rec" -> rec, "nme" -> nme.name, "rhs" -> rhs.toJSObject, "tail" -> tail.toJSObject)
+          js.Dynamic.literal("type" -> "Let", "rec" -> rec, "name" -> nme.name, "rhs" -> rhs.toJSObject, "tail" -> tail.toJSObject)
         case c.Split.Else(term) => js.Dynamic.literal("type" -> "Else", "term" -> term.toJSObject)
         case c.Split.Nil => js.Dynamic.literal("type" -> "Nil")
       }

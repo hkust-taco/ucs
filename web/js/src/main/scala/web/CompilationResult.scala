@@ -11,14 +11,14 @@ final case class Compilation(
   @JSExport target: js.UndefOr[StageResult[String]],
 )
 
-@JSExportTopLevel("ParsingInformation")
+@JSExportTopLevel("StageResult")
 final case class StageResult[+T](
   @JSExport val content: js.UndefOr[T],
-  @JSExport val reports: js.Array[Report],
+  @JSExport val reports: js.Array[js.Dynamic],
 )
 
 object StageResult {
   def success[T](content: T): StageResult[T] = StageResult(content, js.Array())
-  def failure(reports: js.Array[Report]): StageResult[Nothing] =
+  def failure(reports: js.Array[js.Dynamic]): StageResult[Nothing] =
     StageResult(js.undefined, reports)
 }

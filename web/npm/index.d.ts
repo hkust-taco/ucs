@@ -1,19 +1,19 @@
 declare module "@mlscript/ucs-demo-build" {
-  interface WebDemo {
-    test(x: number): number;
-    compile(source: string): Compilation;
-  }
-  export const WebDemo: WebDemo;
+  export function compile(source: string): Compilation;
 
-  type Report = InternalReport | ExternalReport;
-  export class InternalReport {
-    kind: Kind;
-    messages: Message[];
-  }
-  export class ExternalReport {
+  export type Report = DiagnosticReport | FatalErrorReport;
+  export type DiagnosticReport = {
+    kind: "error" | "warning";
+    messages: DiagnosticReportMessage[];
+  };
+  export type DiagnosticReportMessage =
+    | { kind: "text"; content: string }
+    | { kind: "code"; line: number; content: string; range: [number, number] };
+  export type FatalErrorReport = {
+    kind: "fatal";
     message: string;
-    stackTraces: string[];
-  }
+    stack: string[];
+  };
 
   export class StageResult<T> {
     public content?: T;
@@ -24,20 +24,6 @@ declare module "@mlscript/ucs-demo-build" {
     public translation: StageResult<TranslationResult[]>;
     public types: StageResult<string>;
     public target?: StageResult<string>;
-  }
-
-  type Kind = typeof Error | typeof Warning;
-  export const Error: unique symbol;
-  export const Warning: unique symbol;
-
-  export type Message = Text | Code;
-  export class Text {
-    public text: string;
-  }
-  export class Code {
-    public lineNo: number;
-    public code: string;
-    public emphasis?: [number, number];
   }
 
   // Types for translation results
