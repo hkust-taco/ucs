@@ -1,13 +1,13 @@
-package mlscript.ucs
+package mlscript
+package ucs
 
 import collection.mutable.{Map => MutMap}
 import syntax.{source => s, core => c}, stages._, context.{Context, Scrutinee}
 import mlscript.ucs.display.{showNormalizedTerm, showSplit}
 import mlscript.pretyper.{PreTyper, Scope}
 import mlscript.pretyper.symbol._
-import mlscript.{If, Loc, Located, Message, Var}, Message.MessageContext, mlscript.Diagnostic
-import mlscript.utils._, shorthands._
-import syntax.core.{Branch, Split}
+import Message.MessageContext
+import utils._, shorthands._
 
 /**
   * The main class of the UCS desugaring.
@@ -47,8 +47,8 @@ trait Desugarer extends Transformation
       * get or create a dummy class symbol for it. The desugaring can continue
       * and `Typer` will throw an error for this miuse.
       */
-    private def requireClassLikeSymbol(symbol: TypeSymbol)(implicit context: Context): TypeSymbol = symbol match {
-      case symbol @ (_: TraitSymbol | _: ClassSymbol | _: ModuleSymbol | _: DummyClassSymbol) => symbol
+    private def requireClassLikeSymbol(symbol: TypeSymbol)(implicit context: Context): ClassLikeSymbol = symbol match {
+      case symbol: ClassLikeSymbol => symbol
       case symbol: MixinSymbol =>
         raiseDesugaringError(msg"Mixins are not allowed in pattern" -> nme.toLoc)
         context.getOrCreateDummyClassSymbol(nme)
@@ -127,7 +127,7 @@ trait Desugarer extends Transformation
     def withResolvedTermSymbol(implicit scope: Scope): Var = { nme.resolveTermSymbol; nme }
 
     /** Associate the `Var` with a class like symbol and returns the class like symbol. */
-    def resolveClassLikeSymbol(implicit scope: Scope, context: Context): TypeSymbol = {
+    def resolveClassLikeSymbol(implicit scope: Scope, context: Context): ClassLikeSymbol = {
       val symbol = scope.getTypeSymbol(nme.name) match {
         case S(symbol) => requireClassLikeSymbol(symbol)
         case N =>
@@ -196,6 +196,15 @@ trait Desugarer extends Transformation
     * @param scope the scope of the `If` node
     */
   protected def traverseIf(`if`: If)(implicit scope: Scope): Unit = {
+    `if`.desugaredTerm match {
+      case S(desugaredTerm) =>
+        raiseDesugaringError(
+          msg"the `if` expression has already been desugared" -> `if`.getLoc,
+          msg"please make sure that the objects are copied" -> N,
+        )
+        return
+      case N => ()
+    }
     implicit val context: Context = new Context(`if`)
     trace("traverseIf") {
       // Stage 0: Transformation
@@ -257,18 +266,18 @@ trait Desugarer extends Transformation
     * Traverse a desugared _core abstract syntax_ tree. The function takes care
     * of let bindings and resolves variables.
     */
-  protected def traverseSplit(split: syntax.core.Split)(implicit scope: Scope): Unit =
+  protected def traverseSplit(split: c.Split)(implicit scope: Scope): Unit =
     split match {
-      case Split.Cons(Branch(scrutinee, pattern, continuation), tail) => 
+      case c.Split.Cons(c.Branch(scrutinee, pattern, continuation), tail) => 
         traverseTerm(scrutinee)
         val patternSymbols = pattern.declaredVars.map(nme => nme -> nme.symbol)
         traverseSplit(continuation)(scope.withEntries(patternSymbols))
         traverseSplit(tail)
-      case Split.Let(isRec, name, rhs, tail) =>
+      case c.Split.Let(isRec, name, rhs, tail) =>
         val recScope = scope + name.symbol
         traverseTerm(rhs)(if (isRec) recScope else scope)
         traverseSplit(tail)(recScope)
-      case Split.Else(default) => traverseTerm(default)
-      case Split.Nil => ()
+      case c.Split.Else(default) => traverseTerm(default)
+      case c.Split.Nil => ()
     }
 }

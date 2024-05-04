@@ -42,6 +42,10 @@ fun add2(x) = x+2
 //│   fun apply$Lambda1$2$3 = (this, x,) => +(x, 1,)
 //│   Code(List(main$$5()))
 //│ }
+//│ ╔══[ERROR] the `if` expression has already been desugared
+//│ ║  l.7: 	  fun map(f)= new List(f(e), tail.map(f))
+//│ ║       	                         ^
+//│ ╙── please make sure that the objects are copied
 //│ class Lambda1$3$4()
 //│ class Nil$2()
 //│ class List$1(e: Int, tail: List$1 | Nil$2)

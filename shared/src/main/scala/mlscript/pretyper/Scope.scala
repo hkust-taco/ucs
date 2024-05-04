@@ -1,10 +1,8 @@
-package mlscript.pretyper
+package mlscript
+package pretyper
 
-import collection.immutable.Map
-import mlscript.utils._, shorthands._
-import mlscript.{Als, Mod, NuTypeDef, TypeName, TypingUnit, Var}
-import scala.annotation.tailrec
-import symbol._
+import annotation.tailrec, collection.immutable.Map
+import utils._, shorthands._, symbol._
 
 final class Scope(val enclosing: Opt[Scope], val types: Map[Str, TypeSymbol], val terms: Map[Str, TermSymbol]) {
   import Scope._
@@ -96,8 +94,8 @@ object Scope {
     // def cls(name: Str) = NuTypeDef(Trt, TypeName(name), Nil, N, N, N, Nil, N, N, TypingUnit(Nil))(N, N)
     def als(name: Str) = NuTypeDef(Als, TypeName(name), Nil, N, N, N, Nil, N, N, TypingUnit(Nil))(N, N, Nil)
     val builtinTypes = Ls(
-      new ModuleSymbol(mod("true")),
-      new ModuleSymbol(mod("false")),
+      new ModuleSymbol(mod("true"), Nil),
+      new ModuleSymbol(mod("false"), Nil),
       new TypeAliasSymbol(als("nothing")),
       new DummyClassSymbol(Var("Object")),
       new DummyClassSymbol(Var("Int")),

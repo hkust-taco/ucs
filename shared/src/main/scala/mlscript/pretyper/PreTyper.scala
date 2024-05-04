@@ -1,11 +1,10 @@
-package mlscript.pretyper
+package mlscript
+package pretyper
 
 import annotation.tailrec, collection.mutable.{Set => MutSet}, collection.immutable.SortedMap, util.chaining._
-import mlscript._, utils._, shorthands._, Diagnostic.PreTyping, Message.MessageContext, symbol._, ucs.Desugarer
+import utils._, shorthands._, Diagnostic.PreTyping, Message.MessageContext, symbol._, ucs.Desugarer
 
 class PreTyper extends Traceable with Diagnosable with Desugarer {
-  import PreTyper._
-
   /** A shorthand function to raise errors without specifying the source. */
   protected def raiseError(messages: (Message -> Opt[Loc])*): Unit =
     raiseError(PreTyping, messages: _*)
@@ -117,12 +116,8 @@ class PreTyper extends Traceable with Diagnosable with Desugarer {
         case Blk(stmts) =>
           traverseStatements(stmts, "block", scope)
           ()
-        case Subs(arr, idx) =>
-          traverseTerm(arr)
-          traverseTerm(idx)
-        case Bind(lhs, rhs) =>
-          traverseTerm(lhs)
-          traverseTerm(rhs)
+        case Subs(arr, idx) => traverseTerm(arr); traverseTerm(idx)
+        case Bind(lhs, rhs) => traverseTerm(lhs); traverseTerm(rhs)
         case Splc(fields) => fields.foreach {
           case L(t) => traverseTerm(t)
           case R(Fld(_, t)) => traverseTerm(t)
@@ -190,47 +185,18 @@ class PreTyper extends Traceable with Diagnosable with Desugarer {
   private def traverseStatements(statements: Ls[Statement], name: Str, parentScope: Scope): Scope =
     trace(s"traverseStatements <== $name: ${"statement".pluralize(statements.size, true)}") {
       // Pass 1: Build a scope with type symbols only.
-      val filterNuTypeDef = { (_: Statement) match { case t: NuTypeDef => S(t); case _ => N } }
-      val typeSymbols = statements.iterator.flatMap(filterNuTypeDef).map(TypeSymbol(_)).toList
+      val typeSymbols = statements.collect { case t: NuTypeDef => TypeSymbol(t) }
       val scopeWithTypes = parentScope.derive ++ typeSymbols
       println(typeSymbols.iterator.map(_.name).mkString("type symbols: {", ", ", "}"))
-      // val scopeWithTypes = statements.iterator.flatMap(filterNuTypeDef).foldLeft(parentScope.derive)(_ + TypeSymbol(_))
-      // Pass 1.1: Resolve subtyping relations. Build a graph and compute base types of each type.
-      // Keep a stable ordering of type symbols when printing the graph.
-      implicit val ord: Ordering[TypeSymbol] = new Ordering[TypeSymbol] {
-        override def compare(x: TypeSymbol, y: TypeSymbol): Int =
-          x.name.compareTo(y.name)
-      }
-      // Collect inheritance relations, represented by a map from a type symbol
-      // to its base types. If a type symbol is not found, we will ignore it
-      // and report the error (but not fatal).
-      val edges = typeSymbols.foldLeft(SortedMap.empty[TypeSymbol, Ls[TypeSymbol]]) { case (acc, self) =>
-        acc + (self -> extractSuperTypes(self.defn.parents).flatMap { nme =>
-          val maybeSymbol = scopeWithTypes.getTypeSymbol(nme.name)
-          if (maybeSymbol.isEmpty) {
-            raiseError(msg"could not find definition `${nme.name}`" -> nme.toLoc)
-          }
-          maybeSymbol
-        })
-      }
-      printGraph(edges, println(_), "inheritance relations", "->")
-      transitiveClosure(edges).foreachEntry { (self, bases) =>
-        self.baseTypes = bases
-        println(s"base types of `${self.name}`: ${bases.iterator.map(_.name).mkString(", ")}")
-      }
-      // Pass 1.2: Resolve signature types for collecting sealed derived types.
-      println("Resolve sealed signature types")
+      // Pass 1.1: Resolve parent type symbols.
       typeSymbols.foreach {
-        case _: MixinSymbol | _: TypeAliasSymbol | _: ModuleSymbol => ()
-        case symbol => symbol.defn.sig.foreach { unions =>
-          val derivedTypes = try extractSignatureTypes(unions) catch { case _: NotImplementedError => Nil }
-          symbol.sealedDerivedTypes = derivedTypes.flatMap { derivedType =>
-            val maybeSymbol = scopeWithTypes.getTypeSymbol(derivedType.name)
-            if (maybeSymbol.isEmpty) raiseError(msg"Undefined type $derivedType" -> derivedType.toLoc)
-            maybeSymbol
+        case s: ClassLikeSymbol => s.parentTypeNames.foreach { nme =>
+          scopeWithTypes.getTypeSymbol(nme.name) match {
+            case S(symbol) => nme.symbol = symbol
+            case N => raiseError(msg"could not find definition `${nme.name}`" -> nme.toLoc)
           }
-          println(s">>> $name: ${symbol.sealedDerivedTypes.iterator.map(_.name).mkString(", ")}")
         }
+        case _ => ()
       }
       // Pass 2: Build a complete scope and collect definitional terms and terms to be traversed.
       val (completeScope, thingsToTraverse) = statements.foldLeft[(Scope, Ls[(Term \/ DefinedTermSymbol, Scope)])](scopeWithTypes, Nil) {
@@ -278,71 +244,4 @@ class PreTyper extends Traceable with Diagnosable with Desugarer {
     trace(s"PreTyper <== $name: ${typingUnit.describe}") {
       traverseStatements(typingUnit.entities, name, scope)
     }({ scope => s"PreTyper ==> ${scope.showLocalSymbols}" })
-  
-  /**
-    * Extract types in class signatures. For example, for this piece of code
-    * ```mls
-    * abstract class Option[A]: Some[A] | None
-    * ```
-    * this function returns, `Some` and `None`.
-    *
-    * @param ty a type obtained from `NuTypeDef.sig`
-    * @return a list of type names, without any p
-    */
-  private def extractSignatureTypes(ty: Type): Ls[TypeName] = {
-    @tailrec
-    def rec(acc: Ls[TypeName], ty: Type): Ls[TypeName] = ty match {
-      case tn: TypeName => tn :: acc
-      case AppliedType(tn: TypeName, _) => tn :: acc
-      case Union(lhs, tn: TypeName) => rec(tn :: acc, lhs)
-      case Union(lhs, AppliedType(tn: TypeName, _)) => rec(tn :: acc, lhs)
-      case other =>
-        // Let's not raise warning for now.
-        // raiseWarning(msg"unknown type in signature" -> other.toLoc)
-        Nil
-    }
-    rec(Nil, ty).reverse
-  }
-
-  def extractSuperTypes(parents: Ls[Term]): Ls[Var] = {
-    @tailrec
-    def rec(acc: Ls[Var], rest: Ls[Term]): Ls[Var] =
-      rest match {
-        case Nil => acc.reverse
-        case (nme: Var) :: tail => rec(nme :: acc, tail)
-        case (TyApp(ty, _)) :: tail => rec(acc, ty :: tail)
-        case (App(term, Tup(_))) :: tail => rec(acc, term :: tail)
-        case head :: tail =>
-          raiseWarning(msg"unknown type in parent types: ${head.showDbg}" -> head.toLoc)
-          rec(acc, tail)
-      }
-    rec(Nil, parents)
-  }
-}
-
-object PreTyper {
-  def transitiveClosure[A](graph: Map[A, List[A]])(implicit ord: Ordering[A]): SortedMap[A, List[A]] = {
-    def dfs(vertex: A, visited: Set[A]): Set[A] = {
-      if (visited.contains(vertex)) visited
-      else graph.getOrElse(vertex, List())
-        .foldLeft(visited + vertex)((acc, v) => dfs(v, acc))
-    }
-    graph.keys.map { vertex =>
-      val closure = dfs(vertex, Set())
-      vertex -> (closure - vertex).toList
-    }.toSortedMap
-  }
-
-  def printGraph(graph: Map[TypeSymbol, List[TypeSymbol]], print: (=> Any) => Unit, title: String, arrow: String): Unit = {
-    print(s"• $title")
-    if (graph.isEmpty)
-      print("  + <Empty>")
-    else
-      graph.foreachEntry { (source, targets) =>
-        print(s"  + ${source.name} $arrow " + {
-          if (targets.isEmpty) s"{}"
-          else targets.iterator.map(_.name).mkString("{ ", ", ", " }")
-        })
-      }
-  }
 }

@@ -1,13 +1,8 @@
-package mlscript.ucs.context
+package mlscript
+package ucs.context
 
 import collection.mutable.{Buffer, SortedMap => MutSortedMap, SortedSet => MutSortedSet}
-import mlscript.{Lit, Loc, Var}
-import mlscript.pretyper.symbol.TypeSymbol
-import mlscript.utils._, shorthands._
-import mlscript.DecLit
-import mlscript.IntLit
-import mlscript.StrLit
-import mlscript.UnitLit
+import pretyper.symbol.{ClassLikeSymbol, TermSymbol, TypeSymbol}, utils._, shorthands._
 
 class Scrutinee(val context: Context, parent: Opt[Scrutinee]) {
   import Scrutinee._
@@ -36,7 +31,7 @@ class Scrutinee(val context: Context, parent: Opt[Scrutinee]) {
     * If there is already a `Pattern.ClassLike` for the given symbol, return it.
     * Otherwise, create a new `Pattern.ClassLike` and return it.
     */
-  def getOrCreateClassPattern(classLikeSymbol: TypeSymbol, refined: Bool): Pattern.ClassLike =
+  def getOrCreateClassPattern(classLikeSymbol: ClassLikeSymbol, refined: Bool): Pattern.ClassLike =
     classLikePatterns.getOrElseUpdate(classLikeSymbol, Pattern.ClassLike(classLikeSymbol, this)(refined))
 
   /**
@@ -108,10 +103,6 @@ class Scrutinee(val context: Context, parent: Opt[Scrutinee]) {
 object Scrutinee {
   // We might need to move these method to a private `VarOps` because they may
   // emit diagnostics.
-
-  import mlscript.Term
-  import mlscript.pretyper.symbol.TermSymbol
-
   def unapply(term: Term)(implicit context: Context): Opt[Scrutinee] = term match {
     case v: Var => v.symbol match {
       case symbol: TermSymbol => symbol.getScrutinee
