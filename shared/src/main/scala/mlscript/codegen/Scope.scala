@@ -142,7 +142,11 @@ class Scope(val name: Str, enclosing: Opt[Scope]) {
     // Replace ticks
     val realPrefix = Scope.replaceTicks(prefix)
     // Try just prefix.
-    if (!runtimeSymbols.contains(realPrefix) && !Symbol.isKeyword(realPrefix)) {
+    if (
+      !runtimeSymbols.contains(realPrefix) &&
+      !Symbol.isKeyword(realPrefix) &&
+      !Symbol.isReservedIdentifier(realPrefix)
+    ) {
       return realPrefix
     }
     // Try prefix with an integer.

@@ -224,6 +224,9 @@ final case class TraitSymbol(
 }
 
 object Symbol {
+  /** Prevent "Unexpected eval or arguments in strict mode". */
+  def isReservedIdentifier(name: Str): Bool = name == "arguments" || name == "eval"
+
   def isKeyword(name: Str): Bool = keywords contains name
 
   private val keywords: Set[Str] = Set(
