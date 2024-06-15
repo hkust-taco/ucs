@@ -3,6 +3,7 @@ package ucs.context
 
 import collection.mutable.{Buffer, SortedMap => MutSortedMap, SortedSet => MutSortedSet}
 import pretyper.symbol.{ClassLikeSymbol, TermSymbol, TypeSymbol}, utils._, shorthands._
+import scala.annotation.tailrec
 
 class Scrutinee(val context: Context, parent: Opt[Scrutinee]) {
   import Scrutinee._
@@ -93,11 +94,17 @@ class Scrutinee(val context: Context, parent: Opt[Scrutinee]) {
         parentScrutinee.classLikePatterns.iterator.flatMap { case (symbol, pattern) =>
           pattern.findSubScrutinee(this).map(_ -> symbol.name)
         }.nextOption() match {
-          case S(index -> typeName) => s"${index.toOrdinalWord} argument of `${typeName}`"
+          case S(index -> typeName) => s"the ${index.toOrdinalWord} argument of `${typeName}`"
           case N => s"`${scrutineeVar.name}`" // Still not the best.
         }
     }
   }
+
+  @tailrec
+  final def isSubScrutineeOf(scrutinee: Scrutinee): Bool = this === scrutinee || (parent match {
+    case Some(parentScrutinee) => parentScrutinee.isSubScrutineeOf(scrutinee)
+    case N => false
+  })
 }
 
 object Scrutinee {
