@@ -274,7 +274,7 @@ module M[A] {
 M.m
 //│ Option['A]
 //│ res
-//│     = None { class: [class None] }
+//│     = None {}
 
 :re // * FIXME (codegen) member definition should inherit mutability of declaration
 M.oops(Some(123))
@@ -286,7 +286,7 @@ M.oops(Some(123))
 M.m
 //│ Option['A]
 //│ res
-//│     = None { class: [class None] }
+//│     = None {}
 
 module M[A] {
   mut val m: Option[A]
@@ -303,7 +303,7 @@ M.oops(Some(123))
 M.m
 //│ Option['A]
 //│ res
-//│     = None { class: [class None] }
+//│     = None {}
 //│ res
 //│     = undefined
 //│ res
@@ -320,7 +320,7 @@ module M[A] {
 M.m
 //│ None
 //│ res
-//│     = None { class: [class None] }
+//│     = None {}
 
 set M.m = None
 //│ ()

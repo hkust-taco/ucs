@@ -32,7 +32,10 @@ module Foo {
 //│         }
 //│       }
 //│       this.#Foo = new Foo();
-//│       this.#Foo.class = Foo;
+//│       Object.defineProperty(this.#Foo, "class", {
+//│         value: Foo,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#Foo;
 //│   }
@@ -44,7 +47,7 @@ module Foo {
 Foo
 //│ Foo
 //│ res
-//│     = Foo { class: [class Foo] }
+//│     = Foo {}
 //│ // Output
 //│ Creating Foo
 
@@ -85,7 +88,7 @@ log(Foo.x)
 :e
 set Foo.y = 123
 //│ ╔══[ERROR] Type `Foo` does not contain member `y`
-//│ ║  l.86: 	set Foo.y = 123
+//│ ║  l.89: 	set Foo.y = 123
 //│ ╙──      	       ^^
 //│ ()
 //│ res
@@ -94,7 +97,7 @@ set Foo.y = 123
 :e
 Foo.y
 //│ ╔══[ERROR] Type `Foo` does not contain member `y`
-//│ ║  l.95: 	Foo.y
+//│ ║  l.98: 	Foo.y
 //│ ╙──      	   ^^
 //│ error
 //│ res
@@ -211,10 +214,10 @@ new MySumCont().init
 :ng
 class Test(mut val x: Int)
 //│ ╔══[PARSE ERROR] Unexpected 'val' keyword in expression position
-//│ ║  l.212: 	class Test(mut val x: Int)
+//│ ║  l.215: 	class Test(mut val x: Int)
 //│ ╙──       	               ^^^
 //│ ╔══[ERROR] Unsupported field specification
-//│ ║  l.212: 	class Test(mut val x: Int)
+//│ ║  l.215: 	class Test(mut val x: Int)
 //│ ╙──       	                   ^
 //│ class Test()
 
@@ -227,13 +230,13 @@ module Foo { val x = 0 }
 :e
 fun test = set Foo.x = 1
 //│ ╔══[ERROR] Type mismatch in assignment:
-//│ ║  l.228: 	fun test = set Foo.x = 1
+//│ ║  l.231: 	fun test = set Foo.x = 1
 //│ ║         	           ^^^^^^^^^^^^^
 //│ ╟── member of type `0` is not mutable
-//│ ║  l.222: 	module Foo { val x = 0 }
+//│ ║  l.225: 	module Foo { val x = 0 }
 //│ ║         	                 ^^^^^
 //│ ╟── but it flows into assigned field with expected type `?x`
-//│ ║  l.228: 	fun test = set Foo.x = 1
+//│ ║  l.231: 	fun test = set Foo.x = 1
 //│ ╙──       	                  ^^
 //│ fun test: ()
 

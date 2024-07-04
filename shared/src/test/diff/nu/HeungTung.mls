@@ -18,7 +18,7 @@ fun x = AA
 x : A
 //│ A
 //│ res
-//│     = AA { class: [class AA extends Object] }
+//│     = AA {}
 
 
 
@@ -43,7 +43,7 @@ Bar : Foo['a, 'b]
 //│     'b :> ()
 //│     'a :> ()
 //│ res
-//│     = Bar { class: [class Bar extends Foo] }
+//│     = Bar {}
 
 
 // * An overloaded function type

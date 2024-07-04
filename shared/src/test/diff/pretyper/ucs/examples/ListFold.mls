@@ -130,7 +130,7 @@ reverse'(1 :: 2 :: 3 :: Nil) |> showList
 //│ reverse'
 //│          = [Function (anonymous)]
 //│ res
-//│     = Nil { class: [class Nil extends List] }
+//│     = Nil {}
 //│ res
 //│     = '[3, 2, 1]'
 
@@ -202,7 +202,7 @@ reverse(1 :: 2 :: 3 :: Nil) |> showList
 //│ reverse''
 //│           = [Function (anonymous)]
 //│ res
-//│     = Nil { class: [class Nil extends List] }
+//│     = Nil {}
 //│ res
 //│     = '[3, 2, 1]'
 

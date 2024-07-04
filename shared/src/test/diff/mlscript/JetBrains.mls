@@ -13,14 +13,14 @@ rec def eval x = case x of {
 //│ eval: 'a -> int
 //│   where
 //│     'a <: (Add with {lhs: 'a, rhs: 'a}) | Lit
-//│     = [Function: eval]
+//│     = [Function: eval1]
 
 def eval eval x = case x of {
   Lit -> x.val
   | Add -> eval eval x.lhs + eval eval x.rhs
   }
 //│ eval: ('a -> 'lhs -> int & 'a) -> ((Add with {lhs: 'lhs, rhs: 'lhs}) | (Lit with {val: 'val})) -> (int | 'val)
-//│     = [Function: eval1]
+//│     = [Function: eval2]
 
 eval eval!
 //│ res: ((Add with {lhs: 'a, rhs: 'a}) | (Lit with {val: 'val})) -> (int | 'val)

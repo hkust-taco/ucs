@@ -166,7 +166,7 @@ h4("anything", "not me", _ => false)
 //│ res
 //│     = 'should be me'
 //│ res
-//│     = None { class: [class None] }
+//│     = None {}
 //│ res
 //│     = 'should be me'
 //│ res

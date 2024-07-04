@@ -147,7 +147,6 @@ abstract class JSBackend {
           return Left(CodeGenError(s"type alias ${name} is not a valid expression"))
         case S(_) => lastWords("register mismatch in scope")
         case N =>
-          println("What the fuck? " + scope.symbols.mkString(", "))
           return handleUnresolvedVar(name)
       }
     })
@@ -1501,7 +1500,6 @@ class JSWebBackend extends JSBackend {
         val recursive = isLetRec.getOrElse(true)
         val isByname = isLetRec.isEmpty
         val symb = symNme.map(_.name)
-        println(s"WTF? Handling $name with symb $symb")
         val (originalExpr, sym) = (if (recursive) {
           val isByvalueRecIn = if (isByname) None else Some(true)
           

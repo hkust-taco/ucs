@@ -56,7 +56,7 @@ map(succ) of Some of 123
 map(succ) of None
 //│ None | Some[Int]
 //│ res
-//│     = None { class: [class None extends Option] }
+//│     = None {}
 
 
 

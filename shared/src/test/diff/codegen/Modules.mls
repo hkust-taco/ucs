@@ -34,7 +34,10 @@ module Foo {
 //│         }
 //│       }
 //│       this.#Foo = new Foo();
-//│       this.#Foo.class = Foo;
+//│       Object.defineProperty(this.#Foo, "class", {
+//│         value: Foo,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#Foo;
 //│   }
@@ -73,7 +76,10 @@ fun y = 1
 //│         }
 //│       }
 //│       this.#Foo = new Foo();
-//│       this.#Foo.class = Foo;
+//│       Object.defineProperty(this.#Foo, "class", {
+//│         value: Foo,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#Foo;
 //│   }

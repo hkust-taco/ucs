@@ -221,7 +221,10 @@ module TestLang extends EvalBase, EvalNeg, EvalNegNeg
 //│         }
 //│       }
 //│       this.#TestLang = new TestLang();
-//│       this.#TestLang.class = TestLang;
+//│       Object.defineProperty(this.#TestLang, "class", {
+//│         value: TestLang,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#TestLang;
 //│   }
@@ -343,7 +346,10 @@ module Barr extends Fooo(0), Bazz(1)
 //│         }
 //│       }
 //│       this.#Barr = new Barr();
-//│       this.#Barr.class = Barr;
+//│       Object.defineProperty(this.#Barr, "class", {
+//│         value: Barr,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#Barr;
 //│   }
@@ -368,7 +374,7 @@ mixin Base {
   fun x = y
 }
 //│ ╔══[ERROR] identifier not found: y
-//│ ║  l.368: 	  fun x = y
+//│ ║  l.374: 	  fun x = y
 //│ ╙──       	          ^
 //│ mixin Base() {
 //│   fun x: error
@@ -410,7 +416,10 @@ module MM extends MA(1), MB(2, 3), MC(4)
 //│         }
 //│       }
 //│       this.#MM = new MM();
-//│       this.#MM.class = MM;
+//│       Object.defineProperty(this.#MM, "class", {
+//│         value: MM,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#MM;
 //│   }

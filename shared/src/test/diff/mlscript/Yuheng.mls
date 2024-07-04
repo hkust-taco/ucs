@@ -111,7 +111,7 @@ rec def eval(e) = case e of
 //│   where
 //│     'a <: (IntLit with {value: 'value}) | (Pair[?, ?] with {lhs: 'a, rhs: 'a})
 //│     'value :> ('value, 'value,)
-//│     = [Function: eval]
+//│     = [Function: eval1]
 
 rec def eval(e) = case e of
   { IntLit -> e.value
@@ -121,7 +121,7 @@ rec def eval(e) = case e of
 //│   where
 //│     'a <: (IntLit with {value: 'value}) | (Pair[?, ?]\rhs with {lhs: 'a})
 //│     'value :> ('value,)
-//│     = [Function: eval1]
+//│     = [Function: eval2]
 
 rec def eval(e) = case e of
   { IntLit -> e.value
@@ -132,7 +132,7 @@ rec def eval(e) = case e of
 //│   where
 //│     'a <: (IntLit with {value: 'value}) | (Pair[?, ?] with {lhs: 'a, rhs: 'a}) | ~IntLit & ~Pair[?, ?]
 //│     'value :> ('value, 'value,)
-//│     = [Function: eval2]
+//│     = [Function: eval3]
 
 eval (IntLit { value = 1 })
 //│ res: 'a

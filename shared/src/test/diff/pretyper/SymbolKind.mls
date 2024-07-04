@@ -115,4 +115,4 @@ f(Module)
 id(Module)
 //│ Module
 //│ res
-//│     = Module { class: [class Module] }
+//│     = Module {}

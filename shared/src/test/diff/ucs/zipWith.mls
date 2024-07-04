@@ -90,7 +90,7 @@ fun zipWith_wrong(f, xs, ys) =
 zipWith_wrong(pairup, Nil, Nil)
 //│ None | Some[Cons[[nothing, nothing]]]
 //│ res
-//│     = None { class: [class None] }
+//│     = None {}
 
 
 
@@ -197,6 +197,6 @@ fun zipWith_wrong2(f, xs, ys) =
 zipWith_wrong2(pairup, Cons(0, Cons(1, Nil)), Cons("0", Cons("1", Nil)))
 //│ Cons[Some[[0 | 1, "0" | "1"]]] | None | Some[Nil]
 //│ res
-//│     = None { class: [class None] }
+//│     = None {}
 
 

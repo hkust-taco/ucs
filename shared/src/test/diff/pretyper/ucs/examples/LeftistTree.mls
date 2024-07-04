@@ -154,7 +154,7 @@ tree1'''' |> show
 //│ res
 //│     = 4
 //│ tree1''''
-//│           = Empty { class: [class Empty extends Tree] }
+//│           = Empty {}
 //│ res
 //│     = '•'
 

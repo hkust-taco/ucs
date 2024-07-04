@@ -19,7 +19,7 @@ module M
 M: Object
 //│ Object
 //│ res
-//│     = M { class: [class M] }
+//│     = M {}
 
 
 

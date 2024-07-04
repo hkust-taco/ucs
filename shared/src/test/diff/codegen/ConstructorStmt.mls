@@ -28,7 +28,10 @@ module Test0 {
 //│         }
 //│       }
 //│       this.#Test0 = new Test0();
-//│       this.#Test0.class = Test0;
+//│       Object.defineProperty(this.#Test0, "class", {
+//│         value: Test0,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#Test0;
 //│   }
@@ -47,7 +50,7 @@ Test0
 //│ res = Test0;
 //│ // End of generated code
 //│ res
-//│     = Test0 { class: [class Test0] }
+//│     = Test0 {}
 //│ // Output
 //│ Hello!
 
@@ -61,7 +64,7 @@ Test0
 //│ res = Test0;
 //│ // End of generated code
 //│ res
-//│     = Test0 { class: [class Test0] }
+//│     = Test0 {}
 
 :js
 class A(a: Int) {
@@ -145,18 +148,18 @@ class Foo {
   this: { x: Int }
 }
 //│ ╔══[ERROR] Type `#Foo` does not contain member `x`
-//│ ║  l.145: 	  this: { x: Int }
+//│ ║  l.148: 	  this: { x: Int }
 //│ ╙──       	          ^
 //│ ╔══[WARNING] Expression in statement position should have type `()`.
 //│ ╟── Use a comma expression `... , ()` to explicitly discard non-unit values, making your intent clearer.
 //│ ╟── Type mismatch in type ascription:
-//│ ║  l.145: 	  this: { x: Int }
+//│ ║  l.148: 	  this: { x: Int }
 //│ ║         	  ^^^^
 //│ ╟── type `{x: Int}` does not match type `()`
-//│ ║  l.145: 	  this: { x: Int }
+//│ ║  l.148: 	  this: { x: Int }
 //│ ║         	        ^^^^^^^^^^
 //│ ╟── but it flows into expression in statement position with expected type `()`
-//│ ║  l.145: 	  this: { x: Int }
+//│ ║  l.148: 	  this: { x: Int }
 //│ ╙──       	  ^^^^
 //│ class Foo {
 //│   constructor()
@@ -186,21 +189,21 @@ class Bar {
   super: { x: Int }
 }
 //│ ╔══[ERROR] Illegal use of `super`
-//│ ║  l.186: 	  super: { x: Int }
+//│ ║  l.189: 	  super: { x: Int }
 //│ ╙──       	  ^^^^^
 //│ ╔══[ERROR] Type `#Bar` does not contain member `x`
-//│ ║  l.186: 	  super: { x: Int }
+//│ ║  l.189: 	  super: { x: Int }
 //│ ╙──       	           ^
 //│ ╔══[WARNING] Expression in statement position should have type `()`.
 //│ ╟── Use a comma expression `... , ()` to explicitly discard non-unit values, making your intent clearer.
 //│ ╟── Type mismatch in type ascription:
-//│ ║  l.186: 	  super: { x: Int }
+//│ ║  l.189: 	  super: { x: Int }
 //│ ║         	  ^^^^^
 //│ ╟── type `{x: Int}` does not match type `()`
-//│ ║  l.186: 	  super: { x: Int }
+//│ ║  l.189: 	  super: { x: Int }
 //│ ║         	         ^^^^^^^^^^
 //│ ╟── but it flows into expression in statement position with expected type `()`
-//│ ║  l.186: 	  super: { x: Int }
+//│ ║  l.189: 	  super: { x: Int }
 //│ ╙──       	  ^^^^^
 //│ class Bar {
 //│   constructor()

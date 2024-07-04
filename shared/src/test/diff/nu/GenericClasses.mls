@@ -423,7 +423,7 @@ M: Cls['a]
 //│     'a :> 123
 //│        <: Int
 //│ res
-//│     = M { class: [class M extends Cls] }
+//│     = M {}
 
 
 class Cls[A](val x: A) { fun g: A -> Int; fun g(x) = 42 }

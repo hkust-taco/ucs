@@ -83,7 +83,7 @@ module C extends A, B
 C : B
 //│ B
 //│ res
-//│     = C { class: [class C extends A] }
+//│     = C {}
 
 
 :w

@@ -34,7 +34,10 @@ module A {
 //│         }
 //│       }
 //│       this.#A = new A();
-//│       this.#A.class = A;
+//│       Object.defineProperty(this.#A, "class", {
+//│         value: A,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#A;
 //│   }
@@ -80,7 +83,10 @@ module A {
 //│         }
 //│       }
 //│       this.#A = new A();
-//│       this.#A.class = A;
+//│       Object.defineProperty(this.#A, "class", {
+//│         value: A,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#A;
 //│   }
@@ -104,7 +110,7 @@ class B(x: Int, y: Int) {
   }
 }
 //│ ╔══[ERROR] identifier not found: y
-//│ ║  l.102: 	    x = y
+//│ ║  l.108: 	    x = y
 //│ ╙──       	        ^
 //│ class B(x: Int, y: Int) {
 //│   constructor()
@@ -120,7 +126,7 @@ class B(x: Int, y: Int) {
   }
 }
 //│ ╔══[ERROR] identifier not found: y
-//│ ║  l.118: 	    x = y
+//│ ║  l.124: 	    x = y
 //│ ╙──       	        ^
 //│ class B(x: Int, y: Int) {
 //│   constructor()

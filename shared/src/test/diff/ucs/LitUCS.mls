@@ -64,4 +64,4 @@ test2(A)
 //│ ╙──      	^^^^^^^^
 //│ 0 | A | error
 //│ res
-//│     = A { class: [class A] }
+//│     = A {}

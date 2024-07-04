@@ -387,7 +387,10 @@ module I {
 //│               }
 //│             }
 //│             this.#K = new K();
-//│             this.#K.class = K;
+//│             Object.defineProperty(this.#K, "class", {
+//│               value: K,
+//│               writeable: false
+//│             });
 //│           }
 //│           return this.#K;
 //│         }
@@ -401,7 +404,10 @@ module I {
 //│         }
 //│       }
 //│       this.#I = new I();
-//│       this.#I.class = I;
+//│       Object.defineProperty(this.#I, "class", {
+//│         value: I,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#I;
 //│   }
@@ -500,7 +506,7 @@ fun h(z: Int) =
   }
   N
 //│ ╔══[ERROR] Construction of unparameterized class N should use the `new` keyword
-//│ ║  l.501: 	  N
+//│ ║  l.507: 	  N
 //│ ╙──       	  ^
 //│ fun h: (z: Int) -> (x: Int) -> N
 
@@ -512,7 +518,7 @@ let hh = h(1)
 :e
 new hh(1)
 //│ ╔══[ERROR] type identifier not found: hh
-//│ ║  l.513: 	new hh(1)
+//│ ║  l.519: 	new hh(1)
 //│ ╙──       	    ^^
 //│ error
 //│ res
@@ -528,10 +534,10 @@ mixin P {
   constructor(x: Int)
 }
 //│ ╔══[ERROR] Explicit module constructors are not supported
-//│ ║  l.525: 	  constructor(x: Int)
+//│ ║  l.531: 	  constructor(x: Int)
 //│ ╙──       	  ^^^^^^^^^^^^^^^^^^^
 //│ ╔══[ERROR] Explicit mixin constructors are not supported
-//│ ║  l.528: 	  constructor(x: Int)
+//│ ║  l.534: 	  constructor(x: Int)
 //│ ╙──       	  ^^^^^^^^^^^^^^^^^^^
 //│ module O {
 //│   constructor(x: Int)
@@ -547,28 +553,28 @@ class QQ(qq: Str) {
   }
 }
 //│ ╔══[ERROR] identifier not found: lol
-//│ ║  l.545: 	    lol
+//│ ║  l.551: 	    lol
 //│ ╙──       	    ^^^
 //│ ╔══[WARNING] Pure expression does nothing in statement position.
-//│ ║  l.545: 	    lol
+//│ ║  l.551: 	    lol
 //│ ╙──       	    ^^^
 //│ ╔══[ERROR] Type mismatch in auxiliary class constructor:
-//│ ║  l.544: 	  constructor(foo: Int) {
+//│ ║  l.550: 	  constructor(foo: Int) {
 //│ ║         	  ^^^^^^^^^^^^^^^^^^^^^^^
-//│ ║  l.545: 	    lol
+//│ ║  l.551: 	    lol
 //│ ║         	^^^^^^^
-//│ ║  l.546: 	    qq = foo
+//│ ║  l.552: 	    qq = foo
 //│ ║         	^^^^^^^^^^^^
-//│ ║  l.547: 	  }
+//│ ║  l.553: 	  }
 //│ ║         	^^^
 //│ ╟── type `Int` is not an instance of type `Str`
-//│ ║  l.544: 	  constructor(foo: Int) {
+//│ ║  l.550: 	  constructor(foo: Int) {
 //│ ║         	                   ^^^
 //│ ╟── but it flows into reference with expected type `Str`
-//│ ║  l.546: 	    qq = foo
+//│ ║  l.552: 	    qq = foo
 //│ ║         	         ^^^
 //│ ╟── Note: constraint arises from type reference:
-//│ ║  l.543: 	class QQ(qq: Str) {
+//│ ║  l.549: 	class QQ(qq: Str) {
 //│ ╙──       	             ^^^
 //│ class QQ(qq: Str) {
 //│   constructor(foo: Int)

@@ -33,7 +33,7 @@ Test.foo
 let t = Test : Test[Int] & Test[Str]
 //│ let t: Test[in Int | Str out nothing]
 //│ t
-//│   = Test { class: [class Test] }
+//│   = Test {}
 
 t.foo
 //│ (Int | Str) -> nothing
@@ -133,12 +133,12 @@ Test<Int> .foo
 Test
 //│ forall 'A. Test['A]
 //│ res
-//│     = Test { class: [class Test] }
+//│     = Test {}
 
 Test : Test<'a>
 //│ Test['a]
 //│ res
-//│     = Test { class: [class Test] }
+//│     = Test {}
 
 
 fun test(x) = if x is Test then x.foo

@@ -26,7 +26,7 @@ module M extends Test {
 M: Test
 //│ Test
 //│ res
-//│     = M { class: [class M extends Object] }
+//│     = M {}
 
 ts(M)
 //│ Int
@@ -85,7 +85,7 @@ oth1: M
 //│ ╙──      	      ^
 //│ M
 //│ res
-//│     = M { class: [class M extends Object] }
+//│     = M {}
 //│ res
 //│     = <no result>
 //│       oth1 is not implemented

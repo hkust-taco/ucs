@@ -14,7 +14,7 @@ rec def eval e = case e of {
 //│ eval: 'a -> int
 //│   where
 //│     'a <: (Add with {lhs: 'a, rhs: 'a}) | Lit
-//│     = [Function: eval]
+//│     = [Function: eval1]
 
 e = Add { lhs = Lit {n=1}; rhs = Lit {n=2} }
 //│ e: Add with {lhs: Lit & {n: 1}, rhs: Lit & {n: 2}}
@@ -60,7 +60,7 @@ def eval eval e = case e of {
   | Add -> eval eval e.lhs + eval eval e.rhs
   }
 //│ eval: ('a -> 'lhs -> int & 'a) -> ((Add with {lhs: 'lhs, rhs: 'lhs}) | (Lit with {n: 'n})) -> (int | 'n)
-//│     = [Function: eval1]
+//│     = [Function: eval2]
 
 eval eval! e
 //│ res: int

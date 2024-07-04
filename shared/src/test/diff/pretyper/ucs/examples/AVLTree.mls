@@ -73,7 +73,7 @@ fun single(v) = Node(v, Empty, Empty, 1)
 //│ fun node: forall 'A. ('A, Empty & Tree['A] | Node[anything] & Tree['A], Empty & Tree['A] | Node[anything] & Tree['A]) -> Node['A]
 //│ fun single: forall 'A0. 'A0 -> Node['A0]
 //│ nil
-//│     = Empty { class: [class Empty extends Tree] }
+//│     = Empty {}
 
 fun isBalanced(t) =
   if t is

@@ -26,7 +26,7 @@ module Base0 extends Base, BaseTest
 Base0
 //│ Base0
 //│ res
-//│     = Base0 { class: [Function: Base0] }
+//│     = Base0 {}
 
 Base0.test
 //│ 42
@@ -255,7 +255,7 @@ module WrapBase1 extends WrapBase, Wrap
 WrapBase1
 //│ WrapBase1
 //│ res
-//│     = WrapBase1 { class: [Function: WrapBase1] }
+//│     = WrapBase1 {}
 
 // :d
 WrapBase1.wrapA

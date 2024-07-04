@@ -39,7 +39,7 @@ module Test extends Foo
 [Test.foo(ValA), Test.foo(ValB)]
 //│ [ValA | ValB, ValA | ValB]
 //│ res
-//│     = [ ValB { class: [class ValB] }, ValB { class: [class ValB] } ]
+//│     = [ ValB {}, ValB {} ]
 
 
 type V = {a: Bool, b: V}
@@ -55,7 +55,7 @@ module Test extends Foo {
 [Test.foo(ValA), Test.foo(ValB)]
 //│ [anything, anything]
 //│ res
-//│     = [ ValB { class: [class ValB] }, ValB { class: [class ValB] } ]
+//│     = [ ValB {}, ValB {} ]
 
 
 module Test extends Foo {
@@ -68,6 +68,6 @@ module Test extends Foo {
 [Test.foo(ValA), Test.foo(ValB)]
 //│ [V, V]
 //│ res
-//│     = [ ValB { class: [class ValB] }, ValB { class: [class ValB] } ]
+//│     = [ ValB {}, ValB {} ]
 
 

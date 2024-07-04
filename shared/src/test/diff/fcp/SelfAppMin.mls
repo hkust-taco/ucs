@@ -12,7 +12,7 @@ def eval eval x = case x of
   L -> 0,
   A -> eval eval x.f
 //│ eval: ('a -> 'f -> 'b & 'a) -> ((A with {f: 'f}) | L) -> (0 | 'b)
-//│     = [Function: eval]
+//│     = [Function: eval1]
 
 
 :e
@@ -93,7 +93,7 @@ def eval eval x = case x of
   L -> 0,
   A -> { x = eval eval x.f }
 //│ eval: ('a -> 'f -> 'b & 'a) -> ((A with {f: 'f}) | L) -> (0 | {x: 'b})
-//│     = [Function: eval1]
+//│     = [Function: eval2]
 
 
 :e

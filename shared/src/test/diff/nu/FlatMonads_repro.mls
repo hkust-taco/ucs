@@ -132,7 +132,7 @@ readInt.bind of Pure
 readInt: IO['a]
 //│ IO[Int]
 //│ res
-//│     = readInt { class: [class readInt extends IO] }
+//│     = readInt {}
 
 (readInt : IO[Int]).bind
 //│ forall 'AA. (Int -> IO['AA]) -> Bind[Int, 'AA]

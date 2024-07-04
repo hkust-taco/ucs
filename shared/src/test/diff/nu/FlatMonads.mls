@@ -263,7 +263,7 @@ val defaultCtx = {printLine, readInt, pure: Pure}
 //│                  class: [class printLine extends IO],
 //│                  unapply: [Function: unapply]
 //│                },
-//│                readInt: readInt { class: [class readInt extends IO] },
+//│                readInt: readInt {},
 //│                pure: [Function (anonymous)] {
 //│                  class: [class Pure extends IO],
 //│                  unapply: [Function: unapply]

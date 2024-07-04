@@ -174,7 +174,10 @@ module M2 {
 //│         }
 //│       }
 //│       this.#M2 = new M2();
-//│       this.#M2.class = M2;
+//│       Object.defineProperty(this.#M2, "class", {
+//│         value: M2,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#M2;
 //│   }

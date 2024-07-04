@@ -145,7 +145,7 @@ module B extends Foo { fun foo(x) = x }
 B : Foo['X]
 //│ Foo['X]
 //│ res
-//│     = B { class: [class B extends Object] }
+//│     = B {}
 
 B.foo
 //│ forall 'a. 'a -> 'a
@@ -165,7 +165,7 @@ module B extends Foo { fun foo(x) = x + 1 }
 B : Foo['X]
 //│ Foo[Int]
 //│ res
-//│     = B { class: [class B extends Object] }
+//│     = B {}
 
 B.foo
 //│ Int -> Int

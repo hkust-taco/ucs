@@ -127,7 +127,7 @@ fun test(x: Option[Int]) =
 //│ ╙──       	    ^^^^
 //│ ╔══[WARNING] Expression in statement position should have type `()`.
 //│ ╟── Use a comma expression `... , ()` to explicitly discard non-unit values, making your intent clearer.
-//│ ╟── Type mismatch in if-else block:
+//│ ╟── Type mismatch in `case` expression:
 //│ ║  l.102: 	  if x is
 //│ ║         	     ^^^^
 //│ ║  l.103: 	    None then [0, 0]

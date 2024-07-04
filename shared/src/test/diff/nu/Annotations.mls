@@ -7,7 +7,7 @@ module tailrec extends Annotation
 tailrec
 //│ tailrec
 //│ res
-//│     = tailrec { class: [class tailrec extends Object] }
+//│     = tailrec {}
 
 @tailrec fun foo(n) =
   if n > 0 then
@@ -29,7 +29,7 @@ module Foo extends Annotation {
 Foo
 //│ Foo
 //│ res
-//│     = Foo { class: [class Foo extends Object] }
+//│     = Foo {}
 
 :e
 @Bar 5

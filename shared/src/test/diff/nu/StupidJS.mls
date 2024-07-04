@@ -9,7 +9,7 @@ module C { fun f() = this }
 C.f()
 //│ C
 //│ res
-//│     = C { class: [class C] }
+//│     = C {}
 
 
 // * In JS semantics, C.f will return a plain method **without capturing `this`**!!

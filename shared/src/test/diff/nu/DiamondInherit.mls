@@ -25,7 +25,7 @@ Bar : Foo['X]
 //│   where
 //│     'X := Int | Str
 //│ res
-//│     = Bar { class: [class Bar extends Object] }
+//│     = Bar {}
 
 (Bar : Foo['X]).foo
 //│ Int | Str
@@ -58,7 +58,7 @@ Bar : Foo['X]
 //│   where
 //│     'X := Int | Str
 //│ res
-//│     = Bar { class: [class Bar extends Object] }
+//│     = Bar {}
 
 
 trait T1 extends Foo[Int | Bool]

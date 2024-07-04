@@ -35,8 +35,8 @@ find(Node(0, Empty, Empty), 0)
 find(Node(1, Empty, Empty), 0)
 //│ None | Some[0]
 //│ res
-//│     = None { class: [class None] }
+//│     = None {}
 //│ res
 //│     = Some {}
 //│ res
-//│     = None { class: [class None] }
+//│     = None {}

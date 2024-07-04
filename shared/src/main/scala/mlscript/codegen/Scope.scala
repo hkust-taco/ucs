@@ -373,7 +373,6 @@ class Scope(val name: Str, enclosing: Opt[Scope]) {
     }
     val symbol = ValueSymbol(lexicalName, runtimeName, isByvalueRec, isLam, forNewDefsDryRun)
     register(symbol)
-    println(s"what the fuck? name = $lexicalName symbolic name = ${symbolicName.toString()}")
     symbolicName.foreach { symbolicName =>
       register(ValueSymbol(symbolicName, runtimeName, isByvalueRec, isLam, forNewDefsDryRun))
     }

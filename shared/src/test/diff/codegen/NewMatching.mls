@@ -229,7 +229,10 @@ fun m(x) =
 //│     if (this.#MM === undefined) {
 //│       class MM {}
 //│       this.#MM = new MM();
-//│       this.#MM.class = MM;
+//│       Object.defineProperty(this.#MM, "class", {
+//│         value: MM,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#MM;
 //│   }
@@ -252,12 +255,12 @@ fun c(x) =
     _ then 0
 //│ ╔══[ERROR] Type mismatch in field selection:
 //│ ╟── tuple literal of type `{0: ?#v, 1: ?#vc}` does not have field '2'
-//│ ║  l.248: 	class VVC(v: Int, vc: Int)
+//│ ║  l.251: 	class VVC(v: Int, vc: Int)
 //│ ║         	          ^^^^^^^^^^
 //│ ╟── but it flows into operator application with expected type `{2: ?a}`
-//│ ║  l.250: 	  if x is
+//│ ║  l.253: 	  if x is
 //│ ║         	     ^^^^
-//│ ║  l.251: 	    VVC(x, y, z) then x + y + z
+//│ ║  l.254: 	    VVC(x, y, z) then x + y + z
 //│ ╙──       	^^^^^^^
 //│ class VVC(v: Int, vc: Int)
 //│ fun c: Object -> Int

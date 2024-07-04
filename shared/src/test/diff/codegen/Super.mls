@@ -132,7 +132,10 @@ module Test0 extends Foo2
 //│         }
 //│       }
 //│       this.#Test0 = new Test0();
-//│       this.#Test0.class = Test0;
+//│       Object.defineProperty(this.#Test0, "class", {
+//│         value: Test0,
+//│         writeable: false
+//│       });
 //│     }
 //│     return this.#Test0;
 //│   }
@@ -146,7 +149,7 @@ module Test0 extends Foo2
 Test0
 //│ Test0
 //│ res
-//│     = Test0 { class: [Function: Test0] }
+//│     = Test0 {}
 
 Test0.foo2
 //│ anything
