@@ -8,6 +8,7 @@ import math.Ordered.orderingToOrdered
 
 import mlscript.utils._, shorthands._
 import scala.annotation.tailrec
+import java.awt.Taskbar.State
 
 
 // Auxiliary definitions for types
@@ -468,6 +469,8 @@ trait NuDeclImpl extends Located { self: NuDecl =>
 }
 
 trait TypingUnitImpl extends Located { self: TypingUnit =>
+  lazy val freeNames: Set[Var] = ???
+
   def showDbg: Str = entities.iterator.map {
     case t: Term => t.print(false)
     case d: NuDecl => d.showDbg
@@ -540,16 +543,74 @@ trait TermImpl extends StatementImpl { self: Term =>
   val original: this.type = this
   
   /** Used by code generation when the typer desugars this term into a different term. */
-  var desugaredTerm: Opt[Term] = N  
-  
-  private var sugaredTerm: Opt[Term] = N
+  var desugaredTerm: Opt[Term] = N
 
-  def desugaredFrom(term: Term): this.type = {
-    sugaredTerm = S(term)
-    withLocOf(term)
+  /**
+   * Regardless of types, compute the variables on which this term will depend
+   * in the generated code. This is used to determine the order in which terms,
+   * functions, and types are generated.
+   */
+  lazy val freeNames: Set[Var] = {
+    desugaredTerm.getOrElse(this) match {
+      case Let(isRec, name, rhs, body) =>
+        val rhsFreeNames = if (isRec) rhs.freeNames - name else rhs.freeNames
+        rhsFreeNames ++ (body.freeNames - name)
+      case Ann(_, receiver) => receiver.freeNames
+      case Splc(fields) => fields.foldLeft(Set.empty[Var]) {
+        case (acc, L(l)) => acc ++ l.freeNames
+        case (acc, R(r)) => acc ++ r.value.freeNames
+      }
+      case Rft(base, decls) => base.freeNames ++ StatementImpl.statements(decls.entities)
+      case DecLit(_) => Set.empty
+      case IntLit(_) => Set.empty
+      case StrLit(_) => Set.empty
+      case UnitLit(_) => Set.empty
+      case v: Var => Set.single(v)
+      case Assign(lhs, rhs) => lhs.freeNames ++ rhs.freeNames
+      case Eqn(lhs, rhs) => lhs.freeNames ++ rhs.freeNames
+      case Bra(_, trm) => trm.freeNames
+      case New(head, body) => (head match {
+        case N => Set.empty
+        case S((typeName, args)) => Set.single(typeName.base.toVar) ++ args.freeNames
+      }) ++ body.freeNames
+      case Subs(arr, idx) => arr.freeNames ++ idx.freeNames
+      case Asc(trm, _) => trm.freeNames
+      case While(cond, body) => cond.freeNames ++ body.freeNames
+      case Super() => Set.empty
+      case TyApp(lhs, targs) => lhs.freeNames
+      case Quoted(body) => body.freeNames
+      case With(trm, fields) => trm.freeNames ++ fields.freeNames
+      case Tup(fields) => fields.foldLeft(Set.empty[Var]) {
+        case (acc, (_, trm)) => acc ++ trm.value.freeNames
+      }
+      case App(lhs, rhs) => lhs.freeNames ++ rhs.freeNames
+      case Bind(lhs, rhs) => lhs.freeNames ++ rhs.freeNames
+      case NuNew(cls) => cls.freeNames
+      case If(_, _) => desugaredTerm match {
+        case N => lastWords("found `If` term without desugared term")
+        case S(term) => term.freeNames
+      }
+      case Forall(params, body) => body.freeNames
+      case AdtMatchWith(cond, arms) => arms.foldLeft(cond.freeNames) {
+        case (acc, AdtMatchPat(pat, body)) => acc ++ pat.freeNames ++ body.freeNames
+      }
+      case Blk(stmts) => StatementImpl.statements(stmts)
+      case Rcd(fields) => fields.foldLeft(Set.empty[Var]) {
+        case (acc, (_, trm)) => acc ++ trm.value.freeNames
+      }
+      case Lam(lhs, rhs) => rhs.freeNames -- lhs.freeNames
+      case Unquoted(body) => body.freeNames
+      case Where(body, where) => body.freeNames
+      case Sel(receiver, _) => receiver.freeNames
+      case Test(trm, ty) => trm.freeNames
+      case CaseOf(trm, cases) => cases.foldLeft(trm.freeNames) {
+        case (acc, (pat, body)) => acc ++ pat.freeNames ++ body.freeNames
+      } (_ ++ _.map(_.freeNames).getOrElse(Set.empty))
+      case Inst(body) => body.freeNames
+    }
   }
   
-  def describe: Str = sugaredTerm match {
+  def describe: Str = desugaredTerm match {
     case S(t) => t.describe
     case N => this match {
       case Ann(_, Ann(_, receiver)) => receiver.describe
@@ -1200,6 +1261,23 @@ trait StatementImpl extends Located { self: Statement =>
       case _: NuTypeDef => " "
     }) + n.showBody
   }
+}
+
+object StatementImpl {
+  def statements(stmts: Ls[Statement]): Set[Var] =
+    stmts.iterator.foldRight(Set.empty[Var]) {
+      case (NuFunDef(isLetRec, bindingVar, _, _, L(body)), freeNamesBehind) =>
+        val rhsFreeNames = isLetRec match {
+          case N | S(true) => body.freeVars - bindingVar // explicit recursive let bindings or functions
+          case S(false) => body.freeVars // let bindings
+        }
+        freeNamesBehind - bindingVar ++ rhsFreeNames
+      case (NuTypeDef(Mod | Cls | Trt, typeName, _, _, _, _, _, _, _, body), freeNamesBehind) =>
+        freeNamesBehind - typeName.toVar ++ body.freeNames
+      case (_: NuTypeDef, freeNamesBehind) => freeNamesBehind // type aliases and mixins
+      case (term: Term, freeNamesBehind) => term.freeNames ++ freeNamesBehind
+      case (other, _) => lastWords(s"unexpected statement ${other.showDbg}")
+    }
 }
 
 trait BlkImpl { self: Blk =>

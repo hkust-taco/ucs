@@ -7,6 +7,7 @@ import mlscript.{JSField, JSLit}
 import scala.collection.mutable.{Set => MutSet}
 import scala.util.control.NonFatal
 import scala.util.chaining._
+import mlscript.codegen.utils.LocatedOps
 
 abstract class JSBackend {
   def oldDefs: Bool
@@ -146,9 +147,13 @@ abstract class JSBackend {
           return Left(CodeGenError(s"type alias ${name} is not a valid expression"))
         case S(_) => lastWords("register mismatch in scope")
         case N =>
-          return Left(CodeGenError(s"unresolved symbol ${name}"))
+          println("What the fuck? " + scope.symbols.mkString(", "))
+          return handleUnresolvedVar(name)
       }
     })
+
+  protected def handleUnresolvedVar(name: Str): Either[CodeGenError, JSExpr] =
+    Left(CodeGenError(s"unresolved symbol ${name}"))
 
   /**
     * Handle all possible cases of MLscript function applications. We extract
@@ -177,7 +182,15 @@ abstract class JSBackend {
         }
         case _ => translateTerm(trm)
       }
-      callee(args map { case (_, Fld(_, arg)) => translateTerm(arg) }: _*)
+      // Hacky fix when the callee is a built-in operator.
+      // This prevents the operator from being called as a function.
+      (args map { case (_, Fld(_, arg)) => translateTerm(arg) }) match {
+        case left :: right :: Nil => callee match {
+          case JSIdent(op) if JSBinary.operators.contains(op) => JSBinary(op, left, right)
+          case _ => callee(left, right)
+        }
+        case translatedArgs => callee(translatedArgs: _*)
+      }
     case App(trm, splice) => ??? // TODO represents `trm(...splice)`
     case _ => throw CodeGenError(s"ill-formed application $term")
   }
@@ -859,7 +872,14 @@ abstract class JSBackend {
           decl,
           JSExprStmt(JSAssignExpr(privateIdent,
             JSNew(JSInvoke(JSIdent(moduleSymbol.name), Nil)))),
-          JSExprStmt(JSAssignExpr(privateIdent.member("class"), JSIdent(moduleSymbol.name))),
+          (JSInvoke(JSIdent("Object").member("defineProperty"), Ls(
+            privateIdent,
+            JSLit(JSLit.makeStringLiteral("class")),
+            JSRecord(Ls(
+              "value" -> JSIdent(moduleSymbol.name),
+              "writeable" -> JSLit("false"),
+            ))
+          ))).stmt,
         )),
         JSReturnStmt(S(privateIdent))
       )))
@@ -1417,76 +1437,105 @@ class JSWebBackend extends JSBackend {
   protected def makeResultArrayReturn(ident: JSIdent): List[JSReturnStmt] =
     ident.member("map")(JSIdent(prettyPrinterName)).`return` :: Nil
 
-  private def generateNewDef(pgrm: Pgrm): (Ls[Str], Ls[Str]) = {
+  private def translateProgram(pgrm: Pgrm): (Ls[Str], Ls[Str]) = {
+    val typeDefs = pgrm.tops.iterator.zipWithIndex.collect { case (x: NuTypeDef, i) => (x, i) }.toList
+    val funDefs = pgrm.tops.iterator.zipWithIndex.collect { case (x: NuFunDef, i) => (x, i) }.toList
+    val terms = pgrm.tops.iterator.zipWithIndex.collect { case (x: Term, i) => (x, i) }.toList
     
-    val (typeDefs, otherStmts) = pgrm.tops.partitionMap {
-      case ot: Terms => R(ot)
-      case fd: NuFunDef => R(fd)
-      case nd: NuTypeDef => L(nd)
-      case _ => die
-   }
+    (Nil, Nil)
+  }
+
+  private def generateNewDef(pgrm: Pgrm): (Ls[Str], Ls[Str]) = {
+
+    val typeDefs = pgrm.tops.collect { case td: NuTypeDef => td }
+    val funDefs = pgrm.tops.collect { case ot: Terms => ot; case fd: NuFunDef => fd }
+
+    val resultsIdent = JSIdent(resultsName)
+    val resultNames = ListBuffer[Str]()
+
+    // We can reduce many code generation errors by translating functions which
+    // do not depend on type declarations.
+    val typeDefNames = typeDefs.collect { case td: NuTypeDef => td.name }.toSet
+    val (freeStmts, otherStmts) = funDefs.partition {
+      case funDef @ NuFunDef(_, Var(name), _, _, L(rhs)) =>
+        val fvs = rhs.freeVars2
+        !fvs.exists(_.name |> typeDefNames.contains)
+      case stmt => false
+    }
+    // But those free statements may also refers to dependent statements.
+
+    // Translate those function implementations.
+    val translatedFreeStmts = freeStmts.flatMap(stmt => translateFunDef(stmt, resultsIdent, resultNames)(topLevelScope))
 
     // don't pass `otherStmts` to the top-level module, because we need to execute them one by one later
     val topModule = topLevelScope.declareTopModule("TypingUnit", Nil, typeDefs, true)
     val moduleIns = topLevelScope.declareValue("typing_unit", Some(false), false, N)
     val moduleDecl = translateTopModuleDeclaration(topModule, true)(topLevelScope)
-    val insDecl =
-      JSConstDecl(moduleIns.runtimeName, JSNew(JSIdent(topModule.name)))
-
+    val insDecl = JSConstDecl(moduleIns.runtimeName, JSNew(JSIdent(topModule.name)))
     val includes = typeDefs.filter(!_.isDecl).map(addNuTypeToGlobalThis(_, moduleIns.runtimeName))
 
-    val resultsIdent = JSIdent(resultsName)
-    val resultNames = ListBuffer[Str]()
-    val stmts: Ls[JSStmt] =
-      JSConstDecl(resultsName, JSArray(Nil)) ::
-        (moduleDecl :: insDecl :: includes)
-        // Generate something like:
-        // ```js
-        // const <name> = <expr>;
-        // <results>.push(<name>);
-        // ```
-        .concat(otherStmts.flatMap {
-          case NuFunDef(isLetRec, nme @ Var(name), symNme, tys, rhs @ L(body)) =>
-            val recursive = isLetRec.getOrElse(true)
-            val isByname = isLetRec.isEmpty
-            val symb = symNme.map(_.name)
-            val (originalExpr, sym) = (if (recursive) {
-              val isByvalueRecIn = if (isByname) None else Some(true)
-              
-              // TODO Improve: (Lionel) what?!
-              val sym = topLevelScope.declareValue(name, isByvalueRecIn, body.isLam, N)
-              val translated = translateTerm(body)(topLevelScope)
-              topLevelScope.unregisterSymbol(sym)
-              
-              val isByvalueRecOut = if (isByname) None else Some(false)
-              (translated, topLevelScope.declareValue(name, isByvalueRecOut, body.isLam, symb))
-            } else {
-              val translated = translateTerm(body)(topLevelScope)
-              val isByvalueRec = if (isByname) None else Some(false)
-              (translated, topLevelScope.declareValue(name, isByvalueRec, body.isLam, symb))
-            })
-            val translatedBody = if (sym.isByvalueRec.isEmpty && !sym.isLam) JSArrowFn(Nil, L(originalExpr)) else originalExpr
-            resultNames += sym.runtimeName
-            topLevelScope.tempVars `with` JSConstDecl(sym.runtimeName, translatedBody) ::
-              JSInvoke(
-                resultsIdent("push"),
-                makeResultArrayItem(sym.lexicalName, JSIdent(sym.runtimeName)) :: Nil
-              ).stmt :: Nil
-          case fd @ NuFunDef(isLetRec, Var(name), _, tys, R(ty)) =>
-            Nil
-          case _: Def | _: TypeDef | _: Constructor =>
-            throw CodeGenError("Def and TypeDef are not supported in NewDef files.")
-          case term: Term =>
-            val res = translateTerm(term)(topLevelScope)
-            resultNames += term.show(true)
-            topLevelScope.tempVars `with` JSInvoke(
-              resultsIdent("push"),
-              makeResultArrayItem("<immediate>", res) :: Nil
-            ).stmt :: Nil
-        })
-    val epilogue = makeResultArrayReturn(resultsIdent)
-    (JSImmEvalFn(N, Nil, R(polyfill.emit() ::: stmts ::: epilogue), Nil).toSourceCode.toLines, resultNames.toList)
+    // Assemble statements of the produced JavaScript function.
+    val stmts = ListBuffer.empty[JSStmt]
+    stmts += JSConstDecl(resultsName, JSArray(Nil)) 
+    stmts ++= translatedFreeStmts
+    stmts += moduleDecl
+    stmts += insDecl
+    stmts ++= includes
+    stmts ++= otherStmts.flatMap(stmt => translateFunDef(stmt, resultsIdent, resultNames)(topLevelScope))
+    stmts ++= makeResultArrayReturn(resultsIdent)
+    stmts.prependAll(polyfill.emit())
+
+    (JSImmEvalFn(N, Nil, R(stmts.toList), Nil).toSourceCode.toLines, resultNames.toList)
   }
+
+  def translateFunDef(funDef: DesugaredStatement,
+                      resultsIdent: JSIdent,
+                      resultNames: ListBuffer[Str])(implicit scope: Scope): Ls[JSStmt] =
+    // Generate something like:
+    // ```js
+    // const <name> = <expr>;
+    // <results>.push(<name>);
+    // ```
+    funDef match {
+      case NuFunDef(isLetRec, nme @ Var(name), symNme, tys, rhs @ L(body)) =>
+        val recursive = isLetRec.getOrElse(true)
+        val isByname = isLetRec.isEmpty
+        val symb = symNme.map(_.name)
+        println(s"WTF? Handling $name with symb $symb")
+        val (originalExpr, sym) = (if (recursive) {
+          val isByvalueRecIn = if (isByname) None else Some(true)
+          
+          // TODO Improve: (Lionel) what?!
+          val sym = topLevelScope.declareValue(name, isByvalueRecIn, body.isLam, symb)
+          val translated = translateTerm(body)(topLevelScope)
+          topLevelScope.unregisterSymbol(sym)
+          
+          val isByvalueRecOut = if (isByname) None else Some(false)
+          (translated, topLevelScope.declareValue(name, isByvalueRecOut, body.isLam, symb))
+        } else {
+          val translated = translateTerm(body)(topLevelScope)
+          val isByvalueRec = if (isByname) None else Some(false)
+          (translated, topLevelScope.declareValue(name, isByvalueRec, body.isLam, symb))
+        })
+        val translatedBody = if (sym.isByvalueRec.isEmpty && !sym.isLam) JSArrowFn(Nil, L(originalExpr)) else originalExpr
+        resultNames += sym.runtimeName
+        topLevelScope.tempVars `with` JSConstDecl(sym.runtimeName, translatedBody) ::
+          JSInvoke(
+            resultsIdent("push"),
+            makeResultArrayItem(sym.lexicalName, JSIdent(sym.runtimeName)) :: Nil
+          ).stmt :: Nil
+      case fd @ NuFunDef(isLetRec, Var(name), _, tys, R(ty)) =>
+        Nil
+      case _: Def | _: TypeDef | _: Constructor =>
+        throw CodeGenError("Def and TypeDef are not supported in NewDef files.")
+      case term: Term =>
+        val res = translateTerm(term)(topLevelScope)
+        resultNames += term.show(true)
+        topLevelScope.tempVars `with` JSInvoke(
+          resultsIdent("push"),
+          makeResultArrayItem("<immediate>", res) :: Nil
+        ).stmt :: Nil
+    }
 
   def apply(pgrm: Pgrm): (Ls[Str], Ls[Str]) =
     if (!oldDefs) generateNewDef(pgrm) else generate(pgrm)
@@ -1498,6 +1547,9 @@ class NewJSWebBackend extends JSWebBackend {
 
   override protected def makeResultArrayReturn(ident: JSIdent): List[JSReturnStmt] =
     ident.`return` :: Nil
+
+  override protected def handleUnresolvedVar(name: Str): Either[CodeGenError,JSExpr] =
+    Right(JSIdent(name))
 }
 
 abstract class JSTestBackend extends JSBackend {

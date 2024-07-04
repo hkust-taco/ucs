@@ -10,10 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 
 object WebDemo {
   @JSExportTopLevel("compile")
-  def compile(source: String): Compilation = {
-    var totalTypeErrors = 0
-    var totalWarnings = 0
-    var outputMarker = ""
+  def compile(source: String, prelude: String): Compilation = {
     val blockLineNum = 0
     val showRelativeLineNums = false
     

@@ -2,7 +2,7 @@ import Wart._
 
 enablePlugins(ScalaJSPlugin)
 
-ThisBuild / scalaVersion     := "2.13.12"
+ThisBuild / scalaVersion     := "2.13.13"
 ThisBuild / version          := "0.1.0-SNAPSHOT"
 ThisBuild / organization     := "io.lptk"
 ThisBuild / organizationName := "LPTK"
@@ -92,14 +92,15 @@ lazy val compilerJS = compiler.js
 lazy val web = crossProject(JSPlatform, JVMPlatform).in(file("web"))
   .settings(
     name := "mlscript-web",
-    scalaVersion := "2.13.12",
+    scalaVersion := "2.13.13",
     scalacOptions ++= Seq("-deprecation")
   )
   .jvmSettings()
   .jsSettings(
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.1.0",
     Compile / fastOptJS / artifactPath := baseDirectory.value / ".." / ".." / "web" / "npm" / "index.js",
-    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) }
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule).withMinify(true) },
+    Compile / fullLinkJS / scalaJSLinkerOutputDirectory := baseDirectory.value / ".." / ".." / "web" / "npm" / "dist",
   )
   .dependsOn(mlscript % "compile->compile;test->test")
 

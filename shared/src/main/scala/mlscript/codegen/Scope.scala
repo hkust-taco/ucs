@@ -16,6 +16,8 @@ class Scope(val name: Str, enclosing: Opt[Scope]) {
   private val lexicalValueSymbols = scala.collection.mutable.HashMap[Str, RuntimeSymbol]()
   private val runtimeSymbols = scala.collection.mutable.HashSet[Str]()
 
+  def symbols: Iterator[Str] = lexicalValueSymbols.keysIterator.concat(enclosing.fold(Iterator.empty[Str])(_.symbols))
+
   // To allow a class method/getter/constructor to access members of an outer class,
   // we insert `const qualifier = this;` before the class definition starts.
   // To access ALL qualifier variables correctly, we need to make sure
@@ -371,6 +373,7 @@ class Scope(val name: Str, enclosing: Opt[Scope]) {
     }
     val symbol = ValueSymbol(lexicalName, runtimeName, isByvalueRec, isLam, forNewDefsDryRun)
     register(symbol)
+    println(s"what the fuck? name = $lexicalName symbolic name = ${symbolicName.toString()}")
     symbolicName.foreach { symbolicName =>
       register(ValueSymbol(symbolicName, runtimeName, isByvalueRec, isLam, forNewDefsDryRun))
     }
