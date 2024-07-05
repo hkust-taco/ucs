@@ -1,0 +1,3 @@
+[submodule "web-demo"]
+	path = web-demo
+	url = git@github.com:hkust-taco/ucs-web-demo.git
