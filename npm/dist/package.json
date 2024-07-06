@@ -3,7 +3,7 @@
   "name": "@mlscript/ucs-demo-build",
   "version": "0.0.1-alpha.20",
   "description": "A JavaScript build of MLscript specialized for the UCS online demonstration.",
-  "main": "dist/main.js",
+  "main": "lib/main.js",
   "type": "module",
   "types": "index.d.ts"
 }
