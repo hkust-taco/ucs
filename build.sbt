@@ -16,7 +16,7 @@ ThisBuild / scalacOptions ++= Seq(
 )
 
 lazy val root = project.in(file("."))
-  .aggregate(npmBuildJS)
+  .aggregate(mlscriptJVM, npmBuildJS)
   .settings(
     publish := {},
     publishLocal := {},
@@ -50,22 +50,16 @@ lazy val mlscript = crossProject(JSPlatform, JVMPlatform).in(file("."))
       sourceDirectory.value.getParentFile().getParentFile()/"shared/src/test/diff", "*.mls", NothingFilter),
     Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oC"),
   )
-  .jsSettings(
-    scalaJSUseMainModuleInitializer := true,
-    libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.1.0",
-  )
 
 lazy val mlscriptJVM = mlscript.jvm
-lazy val mlscriptJS = mlscript.js
 
 // Create a npm-compatible package from the main projects.
-lazy val npmBuild = crossProject(JSPlatform, JVMPlatform).in(file("npm"))
+lazy val npmBuild = crossProject(JSPlatform).in(file("npm"))
   .settings(
     name := "mlscript-npm",
     scalaVersion := "2.13.13",
     scalacOptions ++= Seq("-deprecation")
   )
-  .jvmSettings()
   .jsSettings(
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.1.0",
     Compile / fastOptJS / artifactPath := baseDirectory.value / ".." / ".." / "npm" / "dist" / "lib" / "index.js",
