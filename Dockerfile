@@ -113,3 +113,7 @@ ENTRYPOINT ["docker-entrypoint.sh"]
 WORKDIR /mlscript
 
 COPY . .
+
+RUN sbt "mlscriptJVM / test"
+
+CMD [ "sbt" ]
