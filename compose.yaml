@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  sbt:
+    image: sbtscala/scala-sbt:eclipse-temurin-alpine-21.0.2_13_1.10.0_3.4.2
+    container_name: ucs-sbt-project
+    working_dir: /app/ucs
+    volumes:
+      - .:/app/ucs
+      - sbt-cache:/root/.sbt
+      # Cache the compiled classes
+      - ivy2-cache:/root/.bloop
+      # Share the compiled JS files with the node container
+      - scala-dist:/app/scala-project/npm/dist
+    command: sbt fullOptJS
+
+  node:
+    image: node:22-alpine
+    container_name: ucs-web-demo
+    working_dir: /app/scala-project/node-project
+    volumes:
+      - ./node-project:/app/scala-project/node-project
+      - scala-dist:/app/scala-project/node-project/public/js
+      - node_modules:/app/scala-project/node-project/node_modules
+    ports:
+      - "3000:3000"
+    command: npm start
+    depends_on:
+      - sbt
+
+volumes:
+  sbt-cache:
+  bloop-cache:
+  scala-dist:
+  node_modules:

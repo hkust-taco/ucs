@@ -1186,12 +1186,15 @@ object DiffTests {
     // "Subsume",
     // "Methods",
   ).map(os.RelPath(_))
+  private val segments = List[Str]("ucs")
   // private def filter(name: Str): Bool =
   def filter(file: os.RelPath): Bool = {
-    if (focused.nonEmpty) focused(file) else modified(file) || modified.isEmpty &&
-      true
-      // name.startsWith("new/")
-      // file.segments.toList.init.lastOption.contains("parser")
+    if (focused.nonEmpty)
+      focused(file)
+    else if (segments.nonEmpty)
+      segments.exists(file.segments.contains) && (modified(file) || modified.isEmpty)
+    else
+      modified(file) || modified.isEmpty && true
   }
 
   object DebugUCSFlags {

@@ -16,7 +16,7 @@ ThisBuild / scalacOptions ++= Seq(
 )
 
 lazy val root = project.in(file("."))
-  .aggregate(mlscriptJS, mlscriptJVM)
+  .aggregate(npmBuildJS)
   .settings(
     publish := {},
     publishLocal := {},
@@ -58,19 +58,20 @@ lazy val mlscript = crossProject(JSPlatform, JVMPlatform).in(file("."))
 lazy val mlscriptJVM = mlscript.jvm
 lazy val mlscriptJS = mlscript.js
 
-lazy val web = crossProject(JSPlatform, JVMPlatform).in(file("web"))
+// Create a npm-compatible package from the main projects.
+lazy val npmBuild = crossProject(JSPlatform, JVMPlatform).in(file("npm"))
   .settings(
-    name := "mlscript-web",
+    name := "mlscript-npm",
     scalaVersion := "2.13.13",
     scalacOptions ++= Seq("-deprecation")
   )
   .jvmSettings()
   .jsSettings(
     libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.1.0",
-    Compile / fastOptJS / artifactPath := baseDirectory.value / ".." / ".." / "web" / "npm" / "index.js",
+    Compile / fastOptJS / artifactPath := baseDirectory.value / ".." / ".." / "npm" / "dist" / "lib" / "index.js",
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule).withMinify(true) },
-    Compile / fullLinkJS / scalaJSLinkerOutputDirectory := baseDirectory.value / ".." / ".." / "web" / "npm" / "dist",
+    Compile / fullLinkJS / scalaJSLinkerOutputDirectory := baseDirectory.value / ".." / "dist" / "lib",
   )
   .dependsOn(mlscript % "compile->compile;test->test")
 
-lazy val webJS = web.js
+lazy val npmBuildJS = npmBuild.js
