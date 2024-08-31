@@ -96,7 +96,7 @@ object WebDemo {
       StageResult[js.Array[TranslationResult]](js.undefined, js.Array())
     ){ case (tu, pgrm) => 
       try {
-        val preTyper = new PreTyper {
+        val preTyper = new PreTyper(reportDiagnostic) {
           override def debugTopicFilters = N
           override protected def emitString(str: Str): Unit = ()
         }

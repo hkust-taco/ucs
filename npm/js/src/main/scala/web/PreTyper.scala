@@ -5,10 +5,11 @@ import mlscript.{If, Loc}
 import mlscript.ucs.context.Context
 import mlscript.ucs.display._
 import mlscript.utils._, shorthands._
-import scalajs.js, js.annotation._
+import scalajs.js, js.annotation._, js.JSConverters._
 import collection.mutable.{Map => MutMap}
 
-class PreTyper extends mlscript.pretyper.PreTyper {
+class PreTyper(convertDiagnostic: mlscript.Diagnostic => js.Dynamic) extends mlscript.pretyper.PreTyper {
+
   private val translationResultsMap = MutMap.empty[Context, TranslationResult]
 
   def translationResults: Iterator[TranslationResult] =
@@ -67,11 +68,12 @@ class PreTyper extends mlscript.pretyper.PreTyper {
         println(showNormalizedTerm(postProcessed), withIndent = false)
       }
       // Stage 4: Coverage checking
-      traceWithTopic("coverage") {
+      val coverageResults = traceWithTopic("coverage") {
         val checked = println("STEP 4")
         val diagnostics = checkCoverage(postProcessed)
         println(s"Coverage checking result: ${diagnostics.size} errors")
         raiseMany(diagnostics)
+        diagnostics
       }
       traceWithTopic("desugared") {
         println(s"Desugared term: ${postProcessed.showDbg}", withIndent = false)
@@ -89,6 +91,7 @@ class PreTyper extends mlscript.pretyper.PreTyper {
         desugared = desugared.toJSObject,
         normalized = serializeNormalizedTerm(normalized),
         postProcessed = serializeNormalizedTerm(postProcessed),
+        coverageCheckingResults = coverageResults.map(convertDiagnostic).toJSArray,
       )
     }(_ => "traverseIf ==> ()")
   }

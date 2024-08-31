@@ -33,6 +33,7 @@ declare module "@mlscript/ucs-demo-build" {
     public desugared: CoreSplit;
     public normalized: NormalizedTerm;
     public postProcessed: NormalizedTerm;
+    public coverageCheckingResults: DiagnosticReport[];
   }
 
   // Types for unserialized terms.

@@ -9,4 +9,5 @@ final case class TranslationResult(
   @JSExport desugared: js.Dynamic,
   @JSExport normalized: js.Dynamic,
   @JSExport postProcessed: js.Dynamic,
+  @JSExport coverageCheckingResults: js.Array[js.Dynamic],
 )
