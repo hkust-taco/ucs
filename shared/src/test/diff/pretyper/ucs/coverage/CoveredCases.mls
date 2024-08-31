@@ -51,7 +51,7 @@ fun f(x) = if
 //│ fun f: B -> 1
 
 // :w
-// FIXME
+// FIXME: should report `x is B then 2` is covered by `x is A and x is B then 1`
 :ducs:normalize.result
 fun f(x) = if
   x is A and
@@ -68,7 +68,7 @@ fun p(x) = true: Bool
 //│ fun p: anything -> Bool
 
 // :w
-// FIXME
+// FIXME: should report `x is B then 2` is covered by `x is A and x is B then 1`
 :ducs:normalize.result
 fun f(x) = if
   x is A and

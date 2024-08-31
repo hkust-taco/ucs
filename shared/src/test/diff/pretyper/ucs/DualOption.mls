@@ -168,7 +168,6 @@ fun p(x) = true
 //│ fun p: anything -> true
 
 
-// FIXME Remove `case p(x) of true -> 0; _ -> 0`
 :ducs:postprocess.result
 fun add_6(x, y) =
   if
@@ -239,12 +238,12 @@ fun add_7(x, y) =
 //│ fun add_7: forall 'a. (None | Some[Int], None | Some[Int & 'a]) -> (Int | 'a)
 
 
-// FIXME Remove `case p(x) of true -> 0; _ -> 0`
+// FIXME: post-processing should remove `case p(x) of true -> 0; _ -> 0`
 :ducs:postprocess.result
 fun add_8(x, y) =
   if
     x is Some(xv) and y is Some(yv) then xv + yv
-    y is None    and p(x) and x is Some(xv) then 42
+    y is None     and p(x) and x is Some(xv) then 42
     y is None     and x is Some(xv) then xv
     y is Some(yv) and p(yv) and x is None then 36
     y is Some(yv) and x is None then yv
@@ -302,12 +301,12 @@ fun add_1(x, y) =
 //│     case y*‡ of
 //│       None*† -> 0
 //│ ╔══[ERROR] when `x` is `None`
-//│ ║  l.289: 	    x is None     and y is None     then 0
+//│ ║  l.288: 	    x is None     and y is None     then 0
 //│ ║         	         ^^^^
 //│ ╟── `y` has 1 missing case
-//│ ║  l.289: 	    x is None     and y is None     then 0
+//│ ║  l.288: 	    x is None     and y is None     then 0
 //│ ║         	                      ^
 //│ ╟── it can be class `Some`
-//│ ║  l.286: 	    x is Some(xv) and y is Some(yv) then xv + yv
+//│ ║  l.285: 	    x is Some(xv) and y is Some(yv) then xv + yv
 //│ ╙──       	                           ^^^^
 //│ fun add_1: (None | Some[Int], None) -> Int
