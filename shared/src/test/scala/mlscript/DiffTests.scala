@@ -440,7 +440,7 @@ class DiffTests
             
             if (!mode.fixme) {
               if (!allowTypeErrors
-                  && !mode.expectTypeErrors && diag.isInstanceOf[ErrorReport] && diag.source =:= Diagnostic.Typing)
+                  && !mode.expectTypeErrors && diag.isInstanceOf[ErrorReport] && (diag.source =:= Diagnostic.Typing || diag.source =:= Diagnostic.PreTyping))
                 { output("TEST CASE FAILURE: There was an unexpected type error"); failures += globalLineNum }
               if (!allowParseErrors
                   && !mode.expectParseErrors && diag.isInstanceOf[ErrorReport] && (diag.source =:= Diagnostic.Lexing || diag.source =:= Diagnostic.Parsing))

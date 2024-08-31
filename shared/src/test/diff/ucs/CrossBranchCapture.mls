@@ -8,12 +8,13 @@ class Numb(n: Int)
 //│ class Numb(n: Int)
 
 
+:e
 fun process(e) =
   if e is
     Numb(n) and n > 0 then n
     Numb(m) then n
 //│ ╔══[ERROR] identifier `n` not found
-//│ ║  l.14: 	    Numb(m) then n
+//│ ║  l.15: 	    Numb(m) then n
 //│ ╙──      	                 ^
 //│ fun process: Numb -> Int
 
@@ -58,10 +59,10 @@ fun process(e) =
     Pair(Vec(n),  Numb(n)) then n
     Pair(Numb(n), Vec(n))  then n
 //│ ╔══[ERROR] identifier `n` not found
-//│ ║  l.57: 	    Pair(Vec(xs), Vec(ys))  then n
+//│ ║  l.58: 	    Pair(Vec(xs), Vec(ys))  then n
 //│ ╙──      	                                 ^
 //│ ╔══[ERROR] identifier not found: n
-//│ ║  l.57: 	    Pair(Vec(xs), Vec(ys))  then n
+//│ ║  l.58: 	    Pair(Vec(xs), Vec(ys))  then n
 //│ ╙──      	                                 ^
 //│ fun process: Pair[Numb | Vec, Numb | Vec] -> (Int | Numb | error)
 //│ Code generation encountered an error:
