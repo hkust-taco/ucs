@@ -1,5 +1,7 @@
 # OOPSLA 2024 Artifact for _The Ultimate Conditional Syntax_
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13621222.svg)](https://doi.org/10.5281/zenodo.13621222)
+
 Our paper introduces a new expressive conditional syntax called _Ultimate Conditional Syntax_ (hereinafter referred to as UCS). In the paper, we propose an algorithm to translate this syntax to traditional pattern matching and prove its correctness.
 
 Our artifact implements this syntax and its translation algorithm on the MLscript compiler. The artifacts consists of two parts:
