@@ -1,3 +1,6 @@
 [submodule "web-demo"]
 	path = web-demo
 	url = https://github.com/hkust-taco/ucs-web-demo.git
+[submodule "manual"]
+	path = manual
+	url = https://github.com/chengluyu/ucs-artifact-document.git
